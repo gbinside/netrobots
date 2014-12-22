@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Board Viewer{% endblock %}
+{% block headcontent %}
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+{% endblock %}
+{% block content %}
+<section id="content" class="body">
+    <h1 class="entry-title">Netrobots - Boardviewer</h1>
+
+    <div class="row">
+        <div class="col-md-8">
+            <svg width="1000px" height="1000px" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+        </svg>
+        </div>
+        <div class="col-md-4 info">
+            <ul>
+                <li class="debug">
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

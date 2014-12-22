@@ -1,0 +1,2 @@
+robots = {}
+hash_table = {}
