@@ -14,7 +14,7 @@ def get_board():
     give back a json with the whole board
     """
 
-    resp = Response(response=json.dumps(app.board.board),
+    resp = Response(response=json.dumps(app.app.game_board.get_status()),
                     status=200,
                     mimetype="application/json")
 

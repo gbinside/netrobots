@@ -1,5 +1,5 @@
 from flask import Flask, render_template, flash
-import board
+from board.model import Board
 
 # Define the WSGI application object
 app = Flask(__name__)
@@ -22,3 +22,5 @@ from app.robot.controllers import mod_robot as robot_module
 app.register_blueprint(board_module)
 app.register_blueprint(viewer_module)
 app.register_blueprint(robot_module)
+
+app.game_board = Board()
