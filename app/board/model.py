@@ -15,3 +15,14 @@ class Board:
             missiles=list(self._missiles),
             explosions=list(self._explosions),
         )
+
+    def radar(self, scanning_robot, xy, max_scan_distance, degree, resolution):
+        ret = []
+        for robot in [x for x in self.robots.values() if x != scanning_robot]:
+            distance, angle = robot.distance(xy)
+            if angle > degree + resolution or angle < degree - resolution:
+                continue
+            if distance > max_scan_distance:
+                continue
+            ret.append(distance)
+        return min(ret) if ret else 0

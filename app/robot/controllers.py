@@ -36,7 +36,7 @@ def new_robot():
         name = request.form['name']
         if name:
             if name not in app.app.game_board.robots:
-                app.app.game_board.robots[name] = Robot(name, len(app.app.game_board.robots))
+                app.app.game_board.robots[name] = Robot(app.app.game_board, name, len(app.app.game_board.robots))
                 token = md5(name + time.strftime('%c')).hexdigest()
                 app.robot.hash_table[token] = app.app.game_board.robots[name]
                 resp = Response(response=json.dumps({'status': 'OK', 'token': token}),

@@ -1,9 +1,12 @@
+from math import atan2, degrees, pi
+
 START_COORDS = [(250, 500), (750, 500), (500, 250), (500, 750), (250, 250), (750, 750), (750, 250), (250, 750)]
 START_HEADING = [0, 180, 90, 270, 45, 225, 135, 315]
 
 
 class Robot:
-    def __init__(self, name, count_of_other=0):
+    def __init__(self, board, name, count_of_other=0):
+        self._board = board
         self._name = name
         self._hit_points = 100
         self._winner = False
@@ -68,16 +71,25 @@ class Robot:
     def scan(self, degree, resolution):
         if self._can_act():
             degree, resolution = int(degree), int(resolution)
-            distance = 0
+            distance = self._board.radar(self, (self._x, self._y), self._max_scan_distance, degree, resolution)
             self._act_done()
             return distance
         return None
 
     def cannon(self, degree, distance):
         if self._can_act():
-            degree, distance = int(degree), int(distance)
+            degree, distance = int(degree), min(int(distance), self._max_fire_distance)
             # @todo fire a missile class
             self._reloading = True
             self._act_done()
             return True
         return None
+
+    def distance(self, xy):
+        dx = (self._x - xy[0])
+        dy = (self._y - xy[1])
+        dist = (dx ** 2 + dy ** 2) ** 0.5
+        rads = atan2(-dy, dx)
+        rads %= 2 * pi
+        angle = degrees(rads)
+        return dist, angle
