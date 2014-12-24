@@ -16,6 +16,7 @@ def check_token(original_function):
     def new_function(token):
         if token in app.robot.hash_table:
             robot = app.robot.hash_table[token]
+            assert isinstance(robot, Robot)
             return original_function(robot)
 
         resp = Response(response=json.dumps({'status': 'KO'}),
@@ -75,7 +76,6 @@ def status(robot):
 def drive(robot):
     speed = request.form['speed']
     degree = request.form['degree']
-    assert isinstance(robot, Robot)
     ret = robot.drive(degree, speed)
     if ret:
         resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_status(), 'done': ret}),
@@ -114,7 +114,6 @@ def scan(robot):
 def cannon(robot):
     degree = request.form['degree']
     distance = request.form['distance']
-    assert isinstance(robot, Robot)
     ret = robot.cannon(degree, distance)
     if ret:
         resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_status(), 'done': ret}),
@@ -127,3 +126,17 @@ def cannon(robot):
                     mimetype="application/json")
     return resp
 
+@mod_robot.route('/<token>/endturn', methods=['PUT'])
+@check_token
+def endturn(robot):
+    ret = robot.endturn()
+    if ret:
+        resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_status(), 'done': ret}),
+                        status=200,
+                        mimetype="application/json")
+        return resp
+
+    resp = Response(response=json.dumps({'status': 'KO', 'robot': robot.get_status(), 'done': ret}),
+                    status=406,
+                    mimetype="application/json")
+    return resp

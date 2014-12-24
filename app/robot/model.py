@@ -1,4 +1,6 @@
-from math import atan2, degrees, pi
+from math import atan2, degrees, pi, sin, cos, radians
+from random import randint
+import app
 
 START_COORDS = [(250, 500), (750, 500), (500, 250), (500, 750), (250, 250), (750, 750), (750, 250), (250, 750)]
 START_HEADING = [0, 180, 90, 270, 45, 225, 135, 315]
@@ -17,7 +19,7 @@ class Robot:
         self._required_speed = 0
         self._max_speed = 100
         self._acceleration = 40
-        self._decelleration = 40
+        self._decelleration = -30
         self._max_sterling_speed = 50
         self._max_scan_distance = 700
         self._max_fire_distance = 700
@@ -33,6 +35,9 @@ class Robot:
         self._reloading_counter = 0
         self._max_actions = 1
         self._current_actions = 0
+        if not app.app.config['TESTING']:
+            self._x, self._y = randint(100, 900), randint(100, 900)
+
 
     def get_status(self):
         return dict(
@@ -50,14 +55,14 @@ class Robot:
 
     def drive(self, degree, speed):
         if self._can_act():
-            degree, speed = int(degree), int(speed)
-            if self._current_speed <= self._max_sterling_speed:
-                self._heading = degree
-                self._required_speed = min(speed, self._max_speed)
-            else:
+            degree, speed = int(degree) % 360, int(speed)
+            if degree != self._heading and self._current_speed > self._max_sterling_speed:
                 # overheat
                 self._current_speed = 0
                 self._required_speed = 0
+            else:
+                self._heading = degree
+                self._required_speed = min(speed, self._max_speed)
             self._act_done()
             return True
         return None
@@ -70,7 +75,7 @@ class Robot:
 
     def scan(self, degree, resolution):
         if self._can_act():
-            degree, resolution = int(degree), int(resolution)
+            degree, resolution = int(degree) % 360, max(1, int(resolution))
             distance = self._board.radar(self, (self._x, self._y), self._max_scan_distance, degree, resolution)
             self._act_done()
             return distance
@@ -78,11 +83,13 @@ class Robot:
 
     def cannon(self, degree, distance):
         if self._can_act():
-            degree, distance = int(degree), min(int(distance), self._max_fire_distance)
-            # @todo fire a missile class
-            self._reloading = True
-            self._act_done()
-            return True
+            if self._reloading is False:
+                degree, distance = int(degree) % 360, min(int(distance), self._max_fire_distance)
+                # @todo fire a missile class
+                self._reloading = True
+                self._act_done()
+                return True
+            return False
         return None
 
     def distance(self, xy):
@@ -91,5 +98,35 @@ class Robot:
         dist = (dx ** 2 + dy ** 2) ** 0.5
         rads = atan2(-dy, dx)
         rads %= 2 * pi
-        angle = degrees(rads)
+        angle = (360 - degrees(rads)) % 360
         return dist, angle
+
+    def endturn(self):
+        self._current_actions = 0
+        # REALOADING
+        if self._reloading:
+            self._reloading_counter += 1
+            self._reloading_counter %= self._reloading_time
+            if 0 == self._reloading_counter:
+                self._reloading = False
+        # SPEED calculation with accelleration/decelleration limit
+        if self._current_speed <= self._required_speed:
+            delta = accel = min(self._acceleration, self._required_speed - self._current_speed)
+        else:
+            delta = decell = max(self._decelleration, self._required_speed - self._current_speed)
+        self._current_speed += delta
+        # MOVEMENT
+        dx = self._current_speed * cos(radians(self._heading))
+        dy = self._current_speed * sin(radians(self._heading))
+        self._x += dx
+        self._y += dy
+        # COLLISION
+        collision = self._board.detect_collision(self, (self._x, self._y), (dx, dy))
+        if collision is not None:
+            self._current_speed = 0
+            self._required_speed = 0
+            self._x, self._y = collision[:2]
+            self._hit_points -= collision[2]
+        # Sync with other robots.
+        self._board.join(self)
+        return True
