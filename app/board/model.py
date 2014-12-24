@@ -5,6 +5,7 @@ class Board:
         self._missiles = []
         self._explosions = []
         self._wall_hit_damage = 2
+        self._join_status = None
 
     def reinit(self, size=(1000, 1000)):
         self.__init__(size)
@@ -52,4 +53,14 @@ class Board:
         return None
 
     def join(self, robot):
+        if self._join_status is None:
+            self._join_status = len(self.robots)
+        self._join_status -= 1
+        if 0 == self._join_status:
+            self._join_status = None
+            self.end_turn()
         return True
+
+    def end_turn(self):
+        # muove i missili
+        pass

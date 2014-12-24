@@ -441,16 +441,14 @@ class AppTestCase(unittest.TestCase):
         ))
         data = json.loads(rv.data)
         token = data['token']
-        self.app.put('/v1/robot/' + token + '/drive', data=dict(
+        rv = self.app.put('/v1/robot/' + token + '/drive', data=dict(
             speed=100,
             degree=0
         ))
 
-        rv = self.app.get('/v1/robot/' + token)
         data = json.loads(rv.data)
         while int(data['robot']['speed']) < 100:
-            self.app.put('/v1/robot/' + token + '/endturn')
-            rv = self.app.get('/v1/robot/' + token)
+            rv = self.app.put('/v1/robot/' + token + '/endturn')
             data = json.loads(rv.data)
 
         assert int(data['robot']['speed']) == 100
@@ -479,6 +477,69 @@ class AppTestCase(unittest.TestCase):
         rv = self.app.get('/v1/robot/' + token)
         data = json.loads(rv.data)
         assert int(data['robot']['speed']) == 0
+
+    def test_cannon_2(self):
+        app.app.game_board.reinit()
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM1'
+        ))
+        token1 = json.loads(rv.data)['token']
+
+        self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM2'
+        ))
+        token2 = json.loads(rv.data)['token']
+
+        self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM3'
+        ))
+        token3 = json.loads(rv.data)['token']
+
+        self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM4'
+        ))
+        token4 = json.loads(rv.data)['token']
+
+        rv = self.app.put('/v1/robot/' + token1 + '/cannon', data=dict(
+            degree=0,
+            distance=500
+        ))
+        for token in (token1, token2, token3, token4):
+            self.app.put('/v1/robot/' + token + '/endturn')
+        for token in (token1, token2, token3, token4):
+            self.app.put('/v1/robot/' + token + '/endturn')
+
+        rv = self.app.get('/v1/robot/' + token2)
+        data = json.loads(rv.data)
+        assert int(data['robot']['hp']) == 90
+
+        rv = self.app.put('/v1/robot/' + token1 + '/cannon', data=dict(
+            degree=45,
+            distance=340
+        ))
+        assert rv.status_code == 200
+        for token in (token1, token2, token3, token4):
+            self.app.put('/v1/robot/' + token + '/endturn')
+        rv = self.app.get('/v1/robot/' + token3)
+        data = json.loads(rv.data)
+        assert int(data['robot']['hp']) == 95
+
+        for token in (token1, token2, token3, token4):
+            self.app.put('/v1/robot/' + token + '/endturn')
+
+        rv = self.app.put('/v1/robot/' + token1 + '/cannon', data=dict(
+            degree=315,
+            distance=315
+        ))
+        assert rv.status_code == 200
+        for token in (token1, token2, token3, token4):
+            self.app.put('/v1/robot/' + token + '/endturn')
+        rv = self.app.get('/v1/robot/' + token4)
+        data = json.loads(rv.data)
+        assert int(data['robot']['hp']) == 97
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
