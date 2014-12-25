@@ -30,7 +30,7 @@ class Robot:
         5%  --    A missile explodes within a 20 meter radius.
         10% --    A missile explodes within a 5 meter radius.
         """
-#        self._bullet_damage = ((40, 3), (20, 5), (5, 10))
+        # self._bullet_damage = ((40, 3), (20, 5), (5, 10))
         # changed to progessive damage
         self._bullet_damage = ((40, 3), (20, 2), (5, 5))
         self._reloading = False
@@ -137,7 +137,7 @@ class Robot:
 
     def damage(self, hp):
         self._hit_points -= hp
-        if self._hit_points<=0:
+        if self._hit_points <= 0:
             self.block()
             self._hit_points = 0
             self._dead = True

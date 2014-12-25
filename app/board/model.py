@@ -62,9 +62,9 @@ class Board:
     def get_status(self):
         return dict(
             size=self._size,
-            robots=dict(self.robots),
-            missiles=list(self._missiles),
-            explosions=list(self._explosions),
+            robots=[v.get_status() for v in self.robots.values()],
+            missiles=[x.get_status() for x in self._missiles],
+            explosions=[x.get_status() for x in self._explosions],
         )
 
     def radar(self, scanning_robot, xy, max_scan_distance, degree, resolution):
