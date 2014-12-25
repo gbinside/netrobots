@@ -106,7 +106,7 @@ class Robot:
         self._current_speed = 0
         self._required_speed = 0
 
-    def endturn(self):
+    def tick(self):
         self._current_actions = 0
         # REALOADING
         if self._reloading:
@@ -131,6 +131,8 @@ class Robot:
             self.block()
             self._x, self._y = collision[:2]
             self._hit_points -= collision[2]
+
+    def endturn(self):
         # Sync with other robots.
         self._board.join(self)
         return True

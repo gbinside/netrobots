@@ -99,14 +99,14 @@ class Board:
         x, y = xy
         dx, dy = dxy
         # collision with other robots
-        step = max(dx, dy)
+        step = max(abs(dx), abs(dy))
         if step:  # the robot is moving
             x0, y0 = x - dx, y - dy
             stepx = float(dx) / float(step)
             stepy = float(dy) / float(step)
             for other_robot in [j for j in self.robots.values() if j != robot]:
                 xp, yp = x0, y0
-                while xp <= x and yp <= y:
+                for i in xrange(int(step)+1):
                     dist, angle = other_robot.distance((xp, yp))
                     if dist < 2:  # 1 per ogni robot
                         other_robot.damage(self._wall_hit_damage)
@@ -165,3 +165,6 @@ class Board:
         for e in self._explosions:
             assert isinstance(e, Explosion)
             e.tick()
+        # manage robots
+        for r in self.robots.values():
+            r.tick()

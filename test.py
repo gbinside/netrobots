@@ -179,21 +179,27 @@ class AppTestCase(unittest.TestCase):
             name='GUNDAM1'
         ))
         data = json.loads(rv.data)
-        token = data['token']
+        token1 = data['token']
 
-        self.app.post('/v1/robot/', data=dict(
+        rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM2'
         ))
+        data = json.loads(rv.data)
+        token2 = data['token']
 
-        self.app.post('/v1/robot/', data=dict(
+        rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM3'
         ))
+        data = json.loads(rv.data)
+        token3 = data['token']
 
-        self.app.post('/v1/robot/', data=dict(
+        rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM4'
         ))
+        data = json.loads(rv.data)
+        token4 = data['token']
 
-        rv = self.app.put('/v1/robot/' + token + '/scan', data=dict(
+        rv = self.app.put('/v1/robot/' + token1 + '/scan', data=dict(
             degree=315,
             resolution=10
         ))
@@ -204,10 +210,11 @@ class AppTestCase(unittest.TestCase):
         assert 'distance' in data
         assert int(data['distance']) == 353
 
-        rv = self.app.put('/v1/robot/' + token + '/endturn')
-        assert rv.status_code == 200
+        for token in (token1,token2,token3, token4):
+            rv = self.app.put('/v1/robot/' + token + '/endturn')
+            assert rv.status_code == 200
 
-        rv = self.app.put('/v1/robot/' + token + '/scan', data=dict(
+        rv = self.app.put('/v1/robot/' + token1 + '/scan', data=dict(
             degree=45,
             resolution=10
         ))
@@ -577,10 +584,12 @@ class AppTestCase(unittest.TestCase):
         while int(data['robot']['hp']) == 100:
             for token in (token1, token2):
                 rv = self.app.put('/v1/robot/' + token + '/endturn')
+            for token in (token1, token2):
+                rv = self.app.get('/v1/robot/' + token)
                 data = json.loads(rv.data)
                 xs.append(data['robot']['x'])
 
-        assert xs[-2:] == [529.0, 530.0]
+        assert xs[-2:] == [529.0, 530.0] or xs[-2:] == [470.0, 471.0]  # depende on which robot is processed first
 
 
 if __name__ == '__main__':
