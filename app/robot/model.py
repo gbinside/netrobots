@@ -57,7 +57,7 @@ class Robot:
 
     def drive(self, degree, speed):
         if self._can_act():
-            degree, speed = int(degree) % 360, int(speed)
+            degree, speed = int(float(degree)) % 360, int(speed)
             if degree != self._heading and self._current_speed > self._max_sterling_speed:
                 # overheat
                 self.block()

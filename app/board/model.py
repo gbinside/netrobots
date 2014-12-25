@@ -1,5 +1,6 @@
 from math import cos, sin, radians
-
+import time
+import app
 
 class Missile:
     def __init__(self, board, xy, degree, distance, speed, damage):
@@ -148,6 +149,8 @@ class Board:
         del self._explosions[self._explosions.index(explosion)]
 
     def join(self, robot):
+        if not app.app.config['TESTING']:
+            time.sleep(1)
         if self._join_status is None:
             self._join_status = len(self.robots)
         self._join_status -= 1
