@@ -1,3 +1,52 @@
+from math import cos, sin, radians
+import json
+
+
+class Missile:
+    def __init__(self, board, xy, degree, distance, speed, damage):
+        assert isinstance(board, Board)
+        self._board = board
+        self._x, self._y = xy
+        self._degree = degree
+        self._distance = distance
+        self._speed = speed
+        self._damage = damage
+
+    def tick(self):
+        dx = min(self._speed, self._distance) * cos(radians(self._degree))
+        dy = min(self._speed, self._distance) * sin(radians(self._degree))
+        self._distance -= min(self._speed, self._distance)
+        self._x += dx
+        self._y += dy
+        if self._distance < 1:
+            self._board.spawn_explosion((self._x, self._y), self._damage)
+
+
+class Explosion:
+    def __init__(self, board, xy, damage):
+        assert isinstance(board, Board)
+        self._board = board
+        self._x, self._y = xy
+        self._damage = damage
+        self._step = 0
+
+    def tick(self):
+        self._step += 1
+        if 1 == self._step:
+            # do damage
+            for robot in self._board.robots.values():
+                d, a = robot.distance((self._x, self._y))
+                total_damage = 0
+                for distance, hp_damage in self._damage:
+                    if d <= distance:
+                        total_damage += hp_damage
+                if total_damage:
+                    robot.damage(total_damage)
+        elif 2 == self._step:
+            # delete self
+            self._board.remove_missile(self)
+
+
 class Board:
     def __init__(self, size=(1000, 1000)):
         self._size = size
@@ -52,6 +101,20 @@ class Board:
         # @TODO collision with other robots
         return None
 
+    def spawn_missile(self, xy, degree, distance, bullet_speed, bullet_damage):
+        missile = Missile(self, xy, degree, distance, bullet_speed, bullet_damage)
+        self._missiles.append(missile)
+
+    def remove_missile(self, missile):
+        self._missiles = [x for x in self._missiles if x != missile]
+        # del self._missiles[self._missiles.index(missile)]
+
+    def spawn_explosion(self, xy, damage):
+        self._explosions.append(Explosion(self, xy, damage))
+
+    def remove_explosion(self, explosion):
+        del self._explosions[self._explosions.index(explosion)]
+
     def join(self, robot):
         if self._join_status is None:
             self._join_status = len(self.robots)
@@ -62,5 +125,11 @@ class Board:
         return True
 
     def end_turn(self):
-        # muove i missili
-        pass
+        # manage missiles
+        for m in self._missiles:
+            assert isinstance(m, Missile)
+            m.tick()
+        # manage explosions
+        for e in self._explosions:
+            assert isinstance(e, Explosion)
+            e.tick()

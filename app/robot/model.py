@@ -1,5 +1,6 @@
 from math import atan2, degrees, pi, sin, cos, radians
 from random import randint
+import json
 import app
 
 START_COORDS = [(250, 500), (750, 500), (500, 250), (500, 750), (250, 250), (750, 750), (750, 250), (250, 750)]
@@ -29,7 +30,9 @@ class Robot:
         5%  --    A missile explodes within a 20 meter radius.
         10% --    A missile explodes within a 5 meter radius.
         """
-        self._bullet_damage = ((40, 3), (20, 5), (5, 10))
+#        self._bullet_damage = ((40, 3), (20, 5), (5, 10))
+        # changed to progessive damage
+        self._bullet_damage = ((40, 3), (20, 2), (5, 5))
         self._reloading = False
         self._reloading_time = 2
         self._reloading_counter = 0
@@ -37,7 +40,6 @@ class Robot:
         self._current_actions = 0
         if not app.app.config['TESTING']:
             self._x, self._y = randint(100, 900), randint(100, 900)
-
 
     def get_status(self):
         return dict(
@@ -58,8 +60,7 @@ class Robot:
             degree, speed = int(degree) % 360, int(speed)
             if degree != self._heading and self._current_speed > self._max_sterling_speed:
                 # overheat
-                self._current_speed = 0
-                self._required_speed = 0
+                self.block()
             else:
                 self._heading = degree
                 self._required_speed = min(speed, self._max_speed)
@@ -85,7 +86,7 @@ class Robot:
         if self._can_act():
             if self._reloading is False:
                 degree, distance = int(degree) % 360, min(int(distance), self._max_fire_distance)
-                # @todo fire a missile class
+                self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage)
                 self._reloading = True
                 self._act_done()
                 return True
@@ -100,6 +101,10 @@ class Robot:
         rads %= 2 * pi
         angle = (360 - degrees(rads)) % 360
         return dist, angle
+
+    def block(self):
+        self._current_speed = 0
+        self._required_speed = 0
 
     def endturn(self):
         self._current_actions = 0
@@ -123,10 +128,16 @@ class Robot:
         # COLLISION
         collision = self._board.detect_collision(self, (self._x, self._y), (dx, dy))
         if collision is not None:
-            self._current_speed = 0
-            self._required_speed = 0
+            self.block()
             self._x, self._y = collision[:2]
             self._hit_points -= collision[2]
         # Sync with other robots.
         self._board.join(self)
         return True
+
+    def damage(self, hp):
+        self._hit_points -= hp
+        if self._hit_points<=0:
+            self.block()
+            self._hit_points = 0
+            self._dead = True

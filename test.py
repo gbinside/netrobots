@@ -485,17 +485,17 @@ class AppTestCase(unittest.TestCase):
         ))
         token1 = json.loads(rv.data)['token']
 
-        self.app.post('/v1/robot/', data=dict(
+        rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM2'
         ))
         token2 = json.loads(rv.data)['token']
 
-        self.app.post('/v1/robot/', data=dict(
+        rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM3'
         ))
         token3 = json.loads(rv.data)['token']
 
-        self.app.post('/v1/robot/', data=dict(
+        rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM4'
         ))
         token4 = json.loads(rv.data)['token']
@@ -514,7 +514,7 @@ class AppTestCase(unittest.TestCase):
         assert int(data['robot']['hp']) == 90
 
         rv = self.app.put('/v1/robot/' + token1 + '/cannon', data=dict(
-            degree=45,
+            degree=315,
             distance=340
         ))
         assert rv.status_code == 200
@@ -528,7 +528,7 @@ class AppTestCase(unittest.TestCase):
             self.app.put('/v1/robot/' + token + '/endturn')
 
         rv = self.app.put('/v1/robot/' + token1 + '/cannon', data=dict(
-            degree=315,
+            degree=45,
             distance=315
         ))
         assert rv.status_code == 200
@@ -538,7 +538,15 @@ class AppTestCase(unittest.TestCase):
         data = json.loads(rv.data)
         assert int(data['robot']['hp']) == 97
 
+    def test_get_board(self):
+        app.app.game_board.reinit()
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM1'
+        ))
 
+        rv = self.app.get('/v1/board/')
+        data = json.loads(rv.data)
+        print data
 
 
 if __name__ == '__main__':
