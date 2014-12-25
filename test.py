@@ -550,6 +550,38 @@ class AppTestCase(unittest.TestCase):
             {u'name': u'GUNDAM1', u'hp': 100, u'winner': False, u'dead': False, u'reloading': False, u'max_speed': 100,
              u'y': 500, u'x': 250, u'speed': 0, u'heading': 0}], u'explosions': [], u'size': [1000, 1000]}
 
+    def test_robot_collision(self):
+        app.app.game_board.reinit()
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM1'
+        ))
+        token1 = json.loads(rv.data)['token']
+
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM2'
+        ))
+        token2 = json.loads(rv.data)['token']
+
+        rv = self.app.put('/v1/robot/' + token1 + '/drive', data=dict(
+            speed=100,
+            degree=0
+        ))
+
+        rv = self.app.put('/v1/robot/' + token2 + '/drive', data=dict(
+            speed=100,
+            degree=180
+        ))
+
+        data = json.loads(rv.data)
+        xs = []
+        while int(data['robot']['hp']) == 100:
+            for token in (token1, token2):
+                rv = self.app.put('/v1/robot/' + token + '/endturn')
+                data = json.loads(rv.data)
+                xs.append(data['robot']['x'])
+
+        assert xs[-2:] == [529.0, 530.0]
+
 
 if __name__ == '__main__':
     unittest.main()

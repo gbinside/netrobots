@@ -1,5 +1,4 @@
 from math import cos, sin, radians
-import json
 
 
 class Missile:
@@ -20,6 +19,16 @@ class Missile:
         self._y += dy
         if self._distance < 1:
             self._board.spawn_explosion((self._x, self._y), self._damage)
+
+    def get_status(self):
+        return dict(
+            x=self._x,
+            y=self._y,
+            degree=self._degree,
+            distance=self._distance,
+            speed=self._speed,
+            damage=self._damage
+        )
 
 
 class Explosion:
@@ -45,6 +54,14 @@ class Explosion:
         elif 2 == self._step:
             # delete self
             self._board.remove_missile(self)
+
+    def get_status(self):
+        return dict(
+            x=self._x,
+            y=self._y,
+            step=self._step,
+            damage=self._damage
+        )
 
 
 class Board:
@@ -81,6 +98,22 @@ class Board:
     def detect_collision(self, robot, xy, dxy):
         x, y = xy
         dx, dy = dxy
+        # collision with other robots
+        step = max(dx, dy)
+        if step:  # the robot is moving
+            x0, y0 = x - dx, y - dy
+            stepx = float(dx) / float(step)
+            stepy = float(dy) / float(step)
+            for other_robot in [j for j in self.robots.values() if j != robot]:
+                xp, yp = x0, y0
+                while xp <= x and yp <= y:
+                    dist, angle = other_robot.distance((xp, yp))
+                    if dist < 2:  # 1 per ogni robot
+                        other_robot.damage(self._wall_hit_damage)
+                        other_robot.block()
+                        return xp, yp, self._wall_hit_damage
+                    xp += stepx
+                    yp += stepy
         # COLLISION WITH WALLS
         if x < 0:
             y = y - dy * x / dx
@@ -98,7 +131,6 @@ class Board:
             x = x - dx * (y - self._size[1]) / dy
             y = self._size[1]
             return x, y, self._wall_hit_damage
-        # @TODO collision with other robots
         return None
 
     def spawn_missile(self, xy, degree, distance, bullet_speed, bullet_damage):
