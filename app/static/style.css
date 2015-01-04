@@ -1,0 +1,11 @@
+div.board {
+    position: relative;
+    border: 1px solid black;
+    width: 1000px;
+    height: 1000px;
+
+}
+
+.robot {
+    position: absolute;
+}
