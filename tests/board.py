@@ -53,13 +53,13 @@ class BoardTestCase(unittest.TestCase):
         self.assertAlmostEqual(robot1.get_xy()[0], 1000)
         self.assertAlmostEqual(robot1.get_xy()[1], 750)
 
-        robot1.drive(180+45, 27)
+        robot1.drive(180 + 45, 27)
         while robot1.get_status()['hp'] == 96:
             board.tick()
         self.assertAlmostEqual(robot1.get_xy()[0], 250)
         self.assertAlmostEqual(robot1.get_xy()[1], 0)
 
-        robot1.drive(180-45, 27)
+        robot1.drive(180 - 45, 27)
         while robot1.get_status()['hp'] == 94:
             board.tick()
         self.assertAlmostEqual(robot1.get_xy()[0], 0)
@@ -88,3 +88,7 @@ class BoardTestCase(unittest.TestCase):
         while len(board.get_status()['missiles']):
             board.tick()
         self.assertEqual(robot2.get_status()['hp'], 82)
+
+
+if __name__ == '__main__':
+    unittest.main()

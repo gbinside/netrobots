@@ -46,8 +46,8 @@ class AppTestCase(unittest.TestCase):
         assert data['status'] == 'OK'
         assert 'robot' in data
         robot = data['robot']
-        assert robot == {u'name': u'GUNDAM2', u'hp': 100, u'winner': False, u'dead': False, u'max_speed': 100,
-                         u'y': 500, u'x': 250, u'speed': 0, u'heading': 0, u'reloading': False}
+        self.assertEqual(robot, {u'name': u'GUNDAM2', u'hp': 100, u'winner': False, u'dead': False, u'max_speed': 27,
+                                 u'y': 500, u'x': 250, u'speed': 0, u'heading': 0, u'reloading': False})
 
         rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM3'
@@ -60,7 +60,7 @@ class AppTestCase(unittest.TestCase):
         assert data['status'] == 'OK'
         assert 'robot' in data
         robot = data['robot']
-        assert robot == {u'name': u'GUNDAM3', u'hp': 100, u'winner': False, u'dead': False, u'max_speed': 100,
+        assert robot == {u'name': u'GUNDAM3', u'hp': 100, u'winner': False, u'dead': False, u'max_speed': 27,
                          u'y': 500, u'x': 750, u'speed': 0, u'heading': 180, u'reloading': False}
 
     def test_drive(self):
@@ -81,17 +81,6 @@ class AppTestCase(unittest.TestCase):
         assert 'robot' in data
         assert data['done']
 
-        rv = self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=50,
-            degree=90
-        ))
-        assert rv.status_code == 406
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'KO'
-        assert 'robot' in data
-        assert not data['done']
-
     def test_scan(self):
         app.app.game_board.reinit()
         rv = self.app.post('/v1/robot/', data=dict(
@@ -109,16 +98,6 @@ class AppTestCase(unittest.TestCase):
         assert data['status'] == 'OK'
         assert 'distance' in data
         assert data['distance'] == 0
-
-        rv = self.app.put('/v1/robot/' + token + '/scan', data=dict(
-            degree=90,
-            resolution=90
-        ))
-        assert rv.status_code == 406
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'KO'
-        assert 'distance' in data
 
     def test_cannon(self):
         app.app.game_board.reinit()
@@ -138,17 +117,6 @@ class AppTestCase(unittest.TestCase):
         assert 'robot' in data
         assert data['done']
         assert data['robot']['reloading']
-
-        rv = self.app.put('/v1/robot/' + token + '/cannon', data=dict(
-            degree=50,
-            distance=100
-        ))
-        assert rv.status_code == 406
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'KO'
-        assert 'robot' in data
-        assert not data['done']
 
     def test_scan_2(self):
         app.app.game_board.reinit()
@@ -210,10 +178,6 @@ class AppTestCase(unittest.TestCase):
         assert 'distance' in data
         assert int(data['distance']) == 353
 
-        for token in (token1,token2,token3, token4):
-            rv = self.app.put('/v1/robot/' + token + '/endturn')
-            assert rv.status_code == 200
-
         rv = self.app.put('/v1/robot/' + token1 + '/scan', data=dict(
             degree=45,
             resolution=10
@@ -243,28 +207,6 @@ class AppTestCase(unittest.TestCase):
         assert 'robot' in data
         assert data['done']
 
-        rv = self.app.put('/v1/robot/' + token + '/endturn')
-        assert rv.status_code == 200
-
-        rv = self.app.get('/v1/robot/' + token)
-        assert rv.status_code == 200
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'OK'
-        assert int(data['robot']['x']) == 284
-        assert int(data['robot']['y']) == 520
-
-        rv = self.app.put('/v1/robot/' + token + '/endturn')
-        assert rv.status_code == 200
-
-        rv = self.app.get('/v1/robot/' + token)
-        assert rv.status_code == 200
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'OK'
-        assert int(data['robot']['x']) == 327
-        assert int(data['robot']['y']) == 545
-
     def test_drive_3(self):
         app.app.game_board.reinit()
         rv = self.app.post('/v1/robot/', data=dict(
@@ -282,208 +224,6 @@ class AppTestCase(unittest.TestCase):
         assert data['status'] == 'OK'
         assert 'robot' in data
         assert data['done']
-
-        rv = self.app.put('/v1/robot/' + token + '/endturn')
-        assert rv.status_code == 200
-
-        rv = self.app.get('/v1/robot/' + token)
-        assert rv.status_code == 200
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'OK'
-        assert int(data['robot']['x']) == 290
-        assert int(data['robot']['y']) == 500
-
-        rv = self.app.put('/v1/robot/' + token + '/endturn')
-        assert rv.status_code == 200
-
-        rv = self.app.get('/v1/robot/' + token)
-        assert rv.status_code == 200
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'OK'
-        assert int(data['robot']['x']) == 370
-        assert int(data['robot']['y']) == 500
-
-        rv = self.app.put('/v1/robot/' + token + '/endturn')
-        assert rv.status_code == 200
-
-        rv = self.app.get('/v1/robot/' + token)
-        assert rv.status_code == 200
-        data = json.loads(rv.data)
-        assert 'status' in data
-        assert data['status'] == 'OK'
-        assert int(data['robot']['x']) == 470
-        assert int(data['robot']['y']) == 500
-
-    def test_drive_4_collision_with_border(self):
-        app.app.game_board.reinit()
-        rv = self.app.post('/v1/robot/', data=dict(
-            name='GUNDAM'
-        ))
-        data = json.loads(rv.data)
-        token = data['token']
-        rv = self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=100,
-            degree=180
-        ))
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 210
-        assert int(data['robot']['y']) == 500
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 130
-        assert int(data['robot']['y']) == 500
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 30
-        assert int(data['robot']['y']) == 500
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 0
-        assert int(data['robot']['y']) == 500
-        assert int(data['robot']['speed']) == 0
-        assert int(data['robot']['hp']) == 98
-
-    def test_drive_5_collision_with_border(self):
-        app.app.game_board.reinit()
-        rv = self.app.post('/v1/robot/', data=dict(
-            name='GUNDAM'
-        ))
-        data = json.loads(rv.data)
-        token = data['token']
-        rv = self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=100,
-            degree=210
-        ))
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 215
-        assert int(data['robot']['y']) == 480
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 146
-        assert int(data['robot']['y']) == 440
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 59
-        assert int(data['robot']['y']) == 390
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 0
-        assert int(data['robot']['y']) == 355
-        assert int(data['robot']['speed']) == 0
-        assert int(data['robot']['hp']) == 98
-
-    def test_drive_6_collision_with_border(self):
-        app.app.game_board.reinit()
-        rv = self.app.post('/v1/robot/', data=dict(
-            name='GUNDAM'
-        ))
-        data = json.loads(rv.data)
-        token = data['token']
-        self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=100,
-            degree=30
-        ))
-
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        while int(data['robot']['hp']) == 100:
-            self.app.put('/v1/robot/' + token + '/endturn')
-            rv = self.app.get('/v1/robot/' + token)
-            data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 1000
-        assert int(data['robot']['y']) == 933
-        assert int(data['robot']['speed']) == 0
-        assert int(data['robot']['hp']) == 98
-
-        self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=100,
-            degree=135
-        ))
-        while int(data['robot']['hp']) == 98:
-            self.app.put('/v1/robot/' + token + '/endturn')
-            rv = self.app.get('/v1/robot/' + token)
-            data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 933
-        assert int(data['robot']['y']) == 1000
-        assert int(data['robot']['speed']) == 0
-        assert int(data['robot']['hp']) == 96
-
-        self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=100,
-            degree=240
-        ))
-        while int(data['robot']['hp']) == 96:
-            self.app.put('/v1/robot/' + token + '/endturn')
-            rv = self.app.get('/v1/robot/' + token)
-            data = json.loads(rv.data)
-        assert int(data['robot']['x']) == 355
-        assert int(data['robot']['y']) == 0
-        assert int(data['robot']['speed']) == 0
-        assert int(data['robot']['hp']) == 94
-
-    def test_drive_7_break(self):
-        app.app.game_board.reinit()
-        rv = self.app.post('/v1/robot/', data=dict(
-            name='GUNDAM'
-        ))
-        data = json.loads(rv.data)
-        token = data['token']
-        rv = self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=100,
-            degree=0
-        ))
-
-        data = json.loads(rv.data)
-        while int(data['robot']['speed']) < 100:
-            rv = self.app.put('/v1/robot/' + token + '/endturn')
-            data = json.loads(rv.data)
-
-        assert int(data['robot']['speed']) == 100
-        rv = self.app.put('/v1/robot/' + token + '/drive', data=dict(
-            speed=0,
-            degree=0
-        ))
-        assert rv.status_code == 200
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['speed']) == 70
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['speed']) == 40
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['speed']) == 10
-
-        self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token)
-        data = json.loads(rv.data)
-        assert int(data['robot']['speed']) == 0
 
     def test_cannon_2(self):
         app.app.game_board.reinit()
@@ -511,39 +251,6 @@ class AppTestCase(unittest.TestCase):
             degree=0,
             distance=500
         ))
-        for token in (token1, token2, token3, token4):
-            self.app.put('/v1/robot/' + token + '/endturn')
-        for token in (token1, token2, token3, token4):
-            self.app.put('/v1/robot/' + token + '/endturn')
-
-        rv = self.app.get('/v1/robot/' + token2)
-        data = json.loads(rv.data)
-        assert int(data['robot']['hp']) == 90
-
-        rv = self.app.put('/v1/robot/' + token1 + '/cannon', data=dict(
-            degree=315,
-            distance=340
-        ))
-        assert rv.status_code == 200
-        for token in (token1, token2, token3, token4):
-            self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token3)
-        data = json.loads(rv.data)
-        assert int(data['robot']['hp']) == 95
-
-        for token in (token1, token2, token3, token4):
-            self.app.put('/v1/robot/' + token + '/endturn')
-
-        rv = self.app.put('/v1/robot/' + token1 + '/cannon', data=dict(
-            degree=45,
-            distance=315
-        ))
-        assert rv.status_code == 200
-        for token in (token1, token2, token3, token4):
-            self.app.put('/v1/robot/' + token + '/endturn')
-        rv = self.app.get('/v1/robot/' + token4)
-        data = json.loads(rv.data)
-        assert int(data['robot']['hp']) == 97
 
     def test_get_board(self):
         app.app.game_board.reinit()
@@ -553,43 +260,9 @@ class AppTestCase(unittest.TestCase):
 
         rv = self.app.get('/v1/board/')
         data = json.loads(rv.data)
-        assert data == {u'missiles': [], u'robots': [
-            {u'name': u'GUNDAM1', u'hp': 100, u'winner': False, u'dead': False, u'reloading': False, u'max_speed': 100,
-             u'y': 500, u'x': 250, u'speed': 0, u'heading': 0}], u'explosions': [], u'size': [1000, 1000]}
-
-    def test_robot_collision(self):
-        app.app.game_board.reinit()
-        rv = self.app.post('/v1/robot/', data=dict(
-            name='GUNDAM1'
-        ))
-        token1 = json.loads(rv.data)['token']
-
-        rv = self.app.post('/v1/robot/', data=dict(
-            name='GUNDAM2'
-        ))
-        token2 = json.loads(rv.data)['token']
-
-        rv = self.app.put('/v1/robot/' + token1 + '/drive', data=dict(
-            speed=100,
-            degree=0
-        ))
-
-        rv = self.app.put('/v1/robot/' + token2 + '/drive', data=dict(
-            speed=100,
-            degree=180
-        ))
-
-        data = json.loads(rv.data)
-        xs = []
-        while int(data['robot']['hp']) == 100:
-            for token in (token1, token2):
-                rv = self.app.put('/v1/robot/' + token + '/endturn')
-            for token in (token1, token2):
-                rv = self.app.get('/v1/robot/' + token)
-                data = json.loads(rv.data)
-                xs.append(data['robot']['x'])
-
-        assert xs[-2:] == [529.0, 530.0] or xs[-2:] == [470.0, 471.0]  # depende on which robot is processed first
+        self.assertEqual(data, {u'missiles': [], u'robots': [
+            {u'name': u'GUNDAM1', u'hp': 100, u'winner': False, u'dead': False, u'reloading': False, u'max_speed': 27,
+             u'y': 500, u'x': 250, u'speed': 0, u'heading': 0}], u'explosions': [], u'size': [1000, 1000]})
 
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
-import json
 from math import atan2, degrees
 from random import randint
-import urllib
 import urllib2
+import urllib
+import json
 import sys
 
 __author__ = 'roberto'
@@ -17,9 +17,9 @@ def urlopen(url, data=None, method='GET'):
         'Accept-Version': '1.0'
     }
     if data:
-        request = urllib2.Request(url=BASE+url, data=urllib.urlencode(data), headers=content_header)
+        request = urllib2.Request(url=BASE + url, data=urllib.urlencode(data), headers=content_header)
     else:
-        request = urllib2.Request(url=BASE+url)
+        request = urllib2.Request(url=BASE + url)
     request.get_method = lambda: method
 
     response = urllib2.urlopen(request)
@@ -37,14 +37,13 @@ def goto(token, x, y):
     dy = y - data['robot']['y']
     heading = degrees(atan2(dy, dx))
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=100), 'PUT').read())
-    data = json.loads(urlopen('robot/' + token + '/endturn', method='PUT').read())
-    while distance(data['robot']['x'], data['robot']['y'], x, y) > 120 * 1.5 and data['robot']['speed']>0:  # 120 break distance
-        data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=100), 'PUT').read())  # in case of collision it restart moving
-        data = json.loads(urlopen('robot/' + token + '/endturn', method='PUT').read())
+    data = json.loads(urlopen('robot/' + token).read())
+    # 120 break distance
+    while distance(data['robot']['x'], data['robot']['y'], x, y) > 120 * 1.5 and data['robot']['speed'] > 0:
+        data = json.loads(urlopen('robot/' + token).read())
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=0), 'PUT').read())
-    data = json.loads(urlopen('robot/' + token + '/endturn', method='PUT').read())  # wait speed down
-    data = json.loads(urlopen('robot/' + token + '/endturn', method='PUT').read())
-    data = json.loads(urlopen('robot/' + token + '/endturn', method='PUT').read())
+    while data['robot']['speed'] > 0:
+        data = json.loads(urlopen('robot/' + token).read())  # wait speed down
 
     return not data['robot']['dead']
 

@@ -1,8 +1,22 @@
 from math import cos, sin, radians, atan2
+import threading
 import time
-import app
 
-SLEEP_TIME = 0.1
+
+class BoardThread(threading.Thread):
+    def __init__(self, tick, deltatime, sleep_time=None):
+        threading.Thread.__init__(self)
+        self._tick = tick
+        self._deltatime = deltatime
+        self._sleep_time = sleep_time if sleep_time is not None else deltatime
+
+    def run(self):
+        while 1:
+            self._tick(self._deltatime)
+            time.sleep(self._sleep_time)
+
+    def get_sleep_time(self):
+        return self._sleep_time
 
 
 class Missile:

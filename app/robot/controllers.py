@@ -17,6 +17,7 @@ def check_token(original_function):
         if token in app.robot.hash_table:
             robot = app.robot.hash_table[token]
             assert isinstance(robot, Robot)
+            time.sleep(app.app.game_board_th.get_sleep_time())
             return original_function(robot)
 
         resp = Response(response=json.dumps({'status': 'KO'}),
@@ -115,21 +116,6 @@ def cannon(robot):
     degree = request.form['degree']
     distance = request.form['distance']
     ret = robot.cannon(degree, distance)
-    if ret:
-        resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_status(), 'done': ret}),
-                        status=200,
-                        mimetype="application/json")
-        return resp
-
-    resp = Response(response=json.dumps({'status': 'KO', 'robot': robot.get_status(), 'done': ret}),
-                    status=406,
-                    mimetype="application/json")
-    return resp
-
-@mod_robot.route('/<token>/endturn', methods=['PUT'])
-@check_token
-def endturn(robot):
-    ret = robot.endturn()
     if ret:
         resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_status(), 'done': ret}),
                         status=200,
