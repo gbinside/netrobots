@@ -1,6 +1,9 @@
-from math import cos, sin, radians
+from math import cos, sin, radians, atan2
 import time
 import app
+
+SLEEP_TIME = 0.1
+
 
 class Missile:
     def __init__(self, board, xy, degree, distance, speed, damage):
@@ -11,15 +14,18 @@ class Missile:
         self._distance = distance
         self._speed = speed
         self._damage = damage
+        self._space = 0.0
 
-    def tick(self):
-        dx = min(self._speed, self._distance) * cos(radians(self._degree))
-        dy = min(self._speed, self._distance) * sin(radians(self._degree))
-        self._distance -= min(self._speed, self._distance)
+    def tick(self, deltatime):
+        dx = self._speed * cos(radians(self._degree)) * deltatime
+        dy = self._speed * sin(radians(self._degree)) * deltatime
+        self._distance -= self._speed * deltatime
+        if self._distance < 1:
+            self._board.spawn_explosion((self._x + dx + self._distance * cos(radians(self._degree)),
+                                         self._y + dy + self._distance * sin(radians(self._degree))), self._damage)
+            self._board.remove_missile(self)
         self._x += dx
         self._y += dy
-        if self._distance < 1:
-            self._board.spawn_explosion((self._x, self._y), self._damage)
 
     def get_status(self):
         return dict(
@@ -39,8 +45,9 @@ class Explosion:
         self._x, self._y = xy
         self._damage = damage
         self._step = 0
+        self._explosion_time = 1.0  # sec
 
-    def tick(self):
+    def tick(self, deltatime):
         self._step += 1
         if 1 == self._step:
             # do damage
@@ -51,10 +58,11 @@ class Explosion:
                     if d <= distance:
                         total_damage += hp_damage
                 if total_damage:
-                    robot.damage(total_damage)
-        elif 2 == self._step:
-            # delete self
-            self._board.remove_missile(self)
+                    robot.take_damage(total_damage)
+        elif self._step > 1:
+            self._explosion_time -= deltatime
+            if self._explosion_time <= 0.0:
+                self._board.remove_explosion(self)
 
     def get_status(self):
         return dict(
@@ -65,6 +73,10 @@ class Explosion:
         )
 
 
+class RobotAlreadyExistsException(Exception):
+    pass
+
+
 class Board:
     def __init__(self, size=(1000, 1000)):
         self._size = size
@@ -73,6 +85,12 @@ class Board:
         self._explosions = []
         self._wall_hit_damage = 2
         self._join_status = None
+
+    def add_robot(self, robot):
+        if robot.get_name() not in self.robots:
+            self.robots[robot.get_name()] = robot
+            return True
+        return False
 
     def reinit(self, size=(1000, 1000)):
         self.__init__(size)
@@ -89,6 +107,7 @@ class Board:
         ret = []
         for robot in [x for x in self.robots.values() if x != scanning_robot]:
             distance, angle = robot.distance(xy)
+            angle = (180 + angle) % 360
             if angle > degree + resolution or angle < degree - resolution:
                 continue
             if distance > max_scan_distance:
@@ -107,11 +126,15 @@ class Board:
             stepy = float(dy) / float(step)
             for other_robot in [j for j in self.robots.values() if j != robot]:
                 xp, yp = x0, y0
-                for i in xrange(int(step)+1):
+                for i in xrange(int(step) + 1):
                     dist, angle = other_robot.distance((xp, yp))
                     if dist < 2:  # 1 per ogni robot
-                        other_robot.damage(self._wall_hit_damage)
+                        other_robot.take_damage(self._wall_hit_damage)
                         other_robot.block()
+                        teta = atan2(dy, dx)
+                        xp, yp = other_robot.get_xy()
+                        xp -= 2 * cos(teta)
+                        yp -= 2 * sin(teta)
                         return xp, yp, self._wall_hit_damage
                     xp += stepx
                     yp += stepy
@@ -146,28 +169,20 @@ class Board:
         self._explosions.append(Explosion(self, xy, damage))
 
     def remove_explosion(self, explosion):
-        del self._explosions[self._explosions.index(explosion)]
+        self._explosions = [x for x in self._explosions if x != explosion]
 
-    def join(self, robot):
-        if not app.app.config['TESTING']:
-            time.sleep(1)
-        if self._join_status is None:
-            self._join_status = len(self.robots)
-        self._join_status -= 1
-        if 0 == self._join_status:
-            self._join_status = None
-            self.end_turn()
-        return True
-
-    def end_turn(self):
+    def tick(self, deltatime=0.125):
         # manage missiles
         for m in self._missiles:
             assert isinstance(m, Missile)
-            m.tick()
+            m.tick(deltatime)
         # manage explosions
         for e in self._explosions:
             assert isinstance(e, Explosion)
-            e.tick()
+            e.tick(deltatime)
         # manage robots
         for r in self.robots.values():
-            r.tick()
+            r.tick(deltatime)
+
+    def new_robot(self, clazz, name):
+        return clazz(self, name, len(self.robots))

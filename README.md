@@ -1,5 +1,5 @@
-NETROBOT
-=========
+NETROBOT - Realtime
+===================
 
 Liberamente basato su P-ROBOTS [http://corewar.co.uk/probots/p-robo4.txt]
 
@@ -40,9 +40,6 @@ I proiettili sparati fuori dall'arena esplodono fuori, non sollidono coi bordi p
 NOTE TECNICHE
 =============
 
-Il gioco si svolge a turni, per non rendere eventuali latenze di rete un handicap. Sarebbe bello farlo girare anche in
-realtime, per penalizzare algoritmi complessi, ma questo sbilancerebbe anche in funzione della velocità di calcolo della
- macchina client.
 
 TODO
 =====
