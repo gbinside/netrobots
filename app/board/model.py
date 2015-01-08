@@ -97,6 +97,7 @@ class Board:
         self.robots = {}
         self._missiles = []
         self._explosions = []
+        self._radar = []
         self._wall_hit_damage = 2
         self._join_status = None
 
@@ -110,14 +111,18 @@ class Board:
         self.__init__(size)
 
     def get_status(self):
-        return dict(
+        ret = dict(
             size=self._size,
             robots=[v.get_status() for v in self.robots.values()],
             missiles=[x.get_status() for x in self._missiles],
             explosions=[x.get_status() for x in self._explosions],
+            radar= list(self._radar)
         )
+        self._radar = []
+        return ret
 
     def radar(self, scanning_robot, xy, max_scan_distance, degree, resolution):
+        self._radar.append(dict(xy=xy,degree=degree,resolution=resolution,distance=max_scan_distance))
         ret = []
         for robot in [x for x in self.robots.values() if x != scanning_robot]:
             distance, angle = robot.distance(xy)

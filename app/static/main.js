@@ -28,6 +28,12 @@ $(document).ready(function(){
                     }
                 }
             }
+            for (k in data.radar) {
+                if (data.robots.hasOwnProperty(k)) {
+                    var radar = data.radar[k];
+                    $('.board').append('<div class="radar circle" ><div class="arc"></div></div>');
+                }
+            }
         })
     }, TIME_SLOT);
 });

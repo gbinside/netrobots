@@ -38,8 +38,8 @@ def goto(token, x, y):
     heading = degrees(atan2(dy, dx))
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=100), 'PUT').read())
     data = json.loads(urlopen('robot/' + token).read())
-    # 120 break distance
-    while distance(data['robot']['x'], data['robot']['y'], x, y) > 120 * 1.5 and data['robot']['speed'] > 0:
+    # 80 break distance
+    while distance(data['robot']['x'], data['robot']['y'], x, y) > 65 and data['robot']['speed'] > 0:
         data = json.loads(urlopen('robot/' + token).read())
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=0), 'PUT').read())
     while data['robot']['speed'] > 0:
