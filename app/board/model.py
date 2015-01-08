@@ -1,3 +1,4 @@
+import hashlib
 from math import cos, sin, radians, atan2
 import threading
 import time
@@ -97,7 +98,7 @@ class Board:
         self.robots = {}
         self._missiles = []
         self._explosions = []
-        self._radar = []
+        self._radar = {}
         self._wall_hit_damage = 2
         self._join_status = None
 
@@ -116,13 +117,14 @@ class Board:
             robots=[v.get_status() for v in self.robots.values()],
             missiles=[x.get_status() for x in self._missiles],
             explosions=[x.get_status() for x in self._explosions],
-            radar= list(self._radar)
+            radar=dict(self._radar)
         )
-        self._radar = []
+        self._radar = {}
         return ret
 
     def radar(self, scanning_robot, xy, max_scan_distance, degree, resolution):
-        self._radar.append(dict(xy=xy,degree=degree,resolution=resolution,distance=max_scan_distance))
+        key = hashlib.md5(repr(dict(xy=xy, degree=degree, resolution=resolution, distance=max_scan_distance))).hexdigest();
+        self._radar[key] = dict(xy=xy, degree=degree, resolution=resolution, distance=max_scan_distance)
         ret = []
         for robot in [x for x in self.robots.values() if x != scanning_robot]:
             distance, angle = robot.distance(xy)

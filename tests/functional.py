@@ -15,7 +15,7 @@ class AppTestCase(unittest.TestCase):
         app.app.game_board.reinit()
         rv = self.app.get('/v1/board/')
         assert json.loads(rv.data) == {'size': [1000, 1000], 'robots': [], 'missiles': [], 'explosions': [],
-                                       'radar': []}
+                                       'radar': {}}
 
     def test_new_robot(self):
         app.app.game_board.reinit()
@@ -261,7 +261,7 @@ class AppTestCase(unittest.TestCase):
 
         rv = self.app.get('/v1/board/')
         data = json.loads(rv.data)
-        self.assertEqual(data, {u'radar': [], u'missiles': [], u'robots': [
+        self.assertEqual(data, {u'radar': {}, u'missiles': [], u'robots': [
             {u'name': u'GUNDAM1', u'hp': 100, u'winner': False, u'dead': False, u'reloading': False, u'max_speed': 27,
              u'y': 500, u'x': 250, u'speed': 0, u'heading': 0}], u'explosions': [], u'size': [1000, 1000]})
 

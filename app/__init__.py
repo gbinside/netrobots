@@ -24,6 +24,6 @@ app.register_blueprint(viewer_module)
 app.register_blueprint(robot_module)
 
 app.game_board = Board()
-app.game_board_th = BoardThread(app.game_board.tick, 0.125, 0.0635)
+app.game_board_th = BoardThread(app.game_board.tick, 0.125)
 app.game_board_th.daemon = True
 app.game_board_th.start()

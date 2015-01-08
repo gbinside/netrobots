@@ -29,9 +29,23 @@ $(document).ready(function(){
                 }
             }
             for (k in data.radar) {
-                if (data.robots.hasOwnProperty(k)) {
+                if (data.radar.hasOwnProperty(k)) {
                     var radar = data.radar[k];
-                    $('.board').append('<div class="radar circle" ><div class="arc"></div></div>');
+                    $('.board').append('<div class="radar" id="'+k+'"><div class="arc"></div></div>');
+                    $('#'+k).fadeOut(1000, function() { $(this).remove(); });
+                    var h = Math.sin(Math.PI*radar.resolution/180.0) * radar.distance;
+                    $('#'+k).css({
+                        left:parseInt(radar.xy[0]) - radar.distance, // + radar.distance/2.0*Math.cos(Math.PI*radar.degree/180.0)-radar.distance/2.0,
+                        bottom:parseInt(radar.xy[1]) - h , //-radar.distance/2.0*Math.sin(Math.PI*radar.degree/180.0),
+                        transform:'rotate('+((360-parseInt(radar.degree))%360)+'deg)'
+                        });
+
+                    $('#'+k+' .arc').css({
+                        'border-left': radar.distance+'px solid transparent',
+                        'border-right': radar.distance+'px solid rgba(100,100,255,0.5)',
+                        'border-top': h+'px solid transparent',
+                        'border-bottom': h+'px solid transparent'
+                        });
                 }
             }
         })

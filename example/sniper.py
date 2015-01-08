@@ -14,13 +14,15 @@ def main():
     resolution = 10
     while not data['robot']['dead']:
         data = json.loads(urlopen('robot/' + token + '/scan', {'degree': teta, 'resolution': resolution}, 'PUT').read())
-        if data['distance'] > 40:  # maximum damage radius
+        distance = data['distance']
+        if distance > 40:  # maximum damage radius
             data = json.loads(urlopen('robot/' + token).read())
             while data['robot']['reloading']:
                 data = json.loads(urlopen('robot/' + token).read())
             json.loads(
-                urlopen('robot/' + token + '/cannon', {'degree': teta, 'distance': data['distance']}, 'PUT').read())
-        teta += resolution * 2
+                urlopen('robot/' + token + '/cannon', {'degree': teta, 'distance': distance}, 'PUT').read())
+        else:
+            teta += resolution * 2
         data = json.loads(urlopen('robot/' + token).read())
 
 
