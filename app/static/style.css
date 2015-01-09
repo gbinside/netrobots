@@ -1,8 +1,13 @@
+.debug {
+    display: none;
+}
+
 div.board {
     position: relative;
     border: 1px solid black;
     width: 1000px;
     height: 1000px;
+    overflow: hidden;
 
 }
 
@@ -12,6 +17,20 @@ div.board {
     margin-bottom:-10px;
 }
 
+.missile {
+    position: absolute;
+    margin-left:-4px;
+    margin-bottom:-10px;
+}
+
+.explosion {
+    position: absolute;
+    width:0;
+    height:0;
+    display:block;
+}
+
+
 .radar {
     position: absolute;
 }
@@ -20,8 +39,4 @@ div.board {
     width:0;
     height:0;
     display:block;
-    border-right:100px solid black;
-    border-top: 100px solid transparent;
-    border-bottom: 100px solid transparent;
-    border-left: 0x solid transparent;
 }

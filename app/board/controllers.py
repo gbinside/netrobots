@@ -19,3 +19,14 @@ def get_board():
                     mimetype="application/json")
 
     return resp
+
+@mod_board.route('/reset', methods=['POST'])
+def reset_board():
+    app.app.game_board.reinit()
+    app.robot.hash_table = {}
+    resp = Response(response=json.dumps(app.app.game_board.get_status()),
+                    status=200,
+                    mimetype="application/json")
+
+    return resp
+

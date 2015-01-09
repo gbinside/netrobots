@@ -141,3 +141,6 @@ class Robot:
 
     def get_xy(self):
         return self._x, self._y
+
+    def is_dead(self):
+        return self._dead
