@@ -31,7 +31,7 @@ class Robot:
         """
         # self._bullet_damage = ((40, 3), (20, 5), (5, 10))
         # changed to progessive damage
-        self._bullet_damage = ((40, 30), (20, 20), (5, 50))
+        self._bullet_damage = ((40, 3), (20, 2), (5, 5))
         self._reloading = False
         self._reloading_time = 2  # s
         self._reloading_counter = 0.0
@@ -56,6 +56,8 @@ class Robot:
         )
 
     def drive(self, degree, speed):
+        if self.is_dead():
+            return False
         degree, speed = int(float(degree)) % 360, int(speed)
         if degree != self._heading and self._current_speed > self._max_sterling_speed:
             # overheat
@@ -66,14 +68,19 @@ class Robot:
         return True
 
     def scan(self, degree, resolution):
+        if self.is_dead():
+            return False
         degree, resolution = int(degree) % 360, max(1, int(resolution))
         distance = self._board.radar(self, (self._x, self._y), self._max_scan_distance, degree, resolution)
         return distance
 
     def cannon(self, degree, distance):
+        if self.is_dead():
+            return False
         if self._reloading is False:
             degree, distance = int(degree) % 360, min(int(float(distance)), self._max_fire_distance)
-            self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage)
+            self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage,
+                                      self)
             self._reloading = True
             self._reloading_counter = 0.0
             return True

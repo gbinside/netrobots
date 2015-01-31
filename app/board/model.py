@@ -21,9 +21,10 @@ class BoardThread(threading.Thread):
 
 
 class Missile:
-    def __init__(self, board, xy, degree, distance, speed, damage):
+    def __init__(self, board, xy, degree, distance, speed, damage, owner=None):
         assert isinstance(board, Board)
         self._board = board
+        self._owner = owner
         self._x, self._y = xy
         self._degree = degree
         self._distance = distance
@@ -37,7 +38,9 @@ class Missile:
         self._distance -= self._speed * deltatime
         if self._distance < 1:
             self._board.spawn_explosion((self._x + dx + self._distance * cos(radians(self._degree)),
-                                         self._y + dy + self._distance * sin(radians(self._degree))), self._damage)
+                                         self._y + dy + self._distance * sin(radians(self._degree))),
+                                        self._damage,
+                                        self._owner)
             self._board.remove_missile(self)
         self._x += dx
         self._y += dy
@@ -54,8 +57,9 @@ class Missile:
 
 
 class Explosion:
-    def __init__(self, board, xy, damage):
+    def __init__(self, board, xy, damage, owner=None):
         assert isinstance(board, Board)
+        self._owner = owner
         self._board = board
         self._x, self._y = xy
         self._damage = damage
@@ -74,6 +78,13 @@ class Explosion:
                         total_damage += hp_damage
                 if total_damage:
                     robot.take_damage(total_damage)
+                    if robot.is_dead():
+                        if robot.get_name() not in self._board.kdr:
+                            self._board.kdr[robot.get_name()] = {'kill': 0, 'death': 0}
+                        self._board.kdr[robot.get_name()]['death'] += 1
+                        if self._owner and self._owner.get_name() not in self._board.kdr:
+                            self._board.kdr[self._owner.get_name()] = {'kill': 0, 'death': 0}
+                        self._board.kdr[self._owner.get_name()]['kill'] += 1
         elif self._step > 1:
             self._explosion_time -= deltatime
             if self._explosion_time <= 0.0:
@@ -102,6 +113,7 @@ class Board:
         self._radar = {}
         self._wall_hit_damage = 2
         self._join_status = None
+        self.kdr = {}
 
     def add_robot(self, robot):
         if robot.get_name() not in self.robots:
@@ -124,15 +136,17 @@ class Board:
             robots=[v.get_status() for v in self.robots.values()],
             missiles=dict([(k, v.get_status()) for k, v in self._missiles.items()]),
             explosions=dict([(k, v.get_status()) for k, v in self._explosions.items()]),
-            radar=dict(self._radar)
+            radar=dict(self._radar),
+            kdr=self.kdr
         )
-        self._radar = {}
+        self._radar = dict([(k, v) for k, v in self._radar.items() if v['spawntime'] + 1.0 > time.time()])
         return ret
 
     def radar(self, scanning_robot, xy, max_scan_distance, degree, resolution):
         key = hashlib.md5(repr(dict(time=time.time(), xy=xy, degree=degree, resolution=resolution,
                                     distance=max_scan_distance))).hexdigest()
-        self._radar[key] = dict(xy=xy, degree=degree, resolution=resolution, distance=max_scan_distance)
+        self._radar[key] = dict(xy=xy, degree=degree, resolution=resolution, distance=max_scan_distance,
+                                spawntime=time.time())
         ret = []
         for robot in [x for x in self.robots.values() if x != scanning_robot]:
             if robot.is_dead():
@@ -188,20 +202,20 @@ class Board:
             return x, y, self._wall_hit_damage
         return None
 
-    def spawn_missile(self, xy, degree, distance, bullet_speed, bullet_damage):
+    def spawn_missile(self, xy, degree, distance, bullet_speed, bullet_damage, owner=None):
         key = hashlib.md5(repr(
             dict(time=time.time(), xy=xy, degree=degree, distance=distance, bullet_speed=bullet_speed,
                  bullet_damage=bullet_damage))).hexdigest()
-        missile = Missile(self, xy, degree, distance, bullet_speed, bullet_damage)
+        missile = Missile(self, xy, degree, distance, bullet_speed, bullet_damage, owner)
         self._missiles[key] = missile
 
     def remove_missile(self, missile):
         self._missiles = dict([(k, x) for k, x in self._missiles.items() if x != missile])
         # del self._missiles[self._missiles.index(missile)]
 
-    def spawn_explosion(self, xy, damage):
+    def spawn_explosion(self, xy, damage, owner=None):
         key = hashlib.md5(repr(dict(time=time.time(), xy=xy, damage=damage))).hexdigest()
-        self._explosions[key] = Explosion(self, xy, damage)
+        self._explosions[key] = Explosion(self, xy, damage, owner)
 
     def remove_explosion(self, explosion):
         self._explosions = dict([(k, x) for k, x in self._explosions.items() if x != explosion])

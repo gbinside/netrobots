@@ -111,9 +111,10 @@ def drive(robot):
 @mod_robot.route('/<token>/scan', methods=['PUT'])
 @check_token
 def scan(robot):
-    degree = request.form['degree']
-    resolution = request.form['resolution']
+    degree = int(float(request.form['degree']))
+    resolution = int(float(request.form['resolution']))
     assert isinstance(robot, Robot)
+    time.sleep(app.app.game_board_th.get_sleep_time())
     ret = robot.scan(degree, resolution)
 
     if ret is not None:
