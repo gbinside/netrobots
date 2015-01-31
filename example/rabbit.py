@@ -54,9 +54,12 @@ def main(argv):
     # token is the signature to be used to send commands
     token = data['token']
     # main loop - goto random position
-    while goto(token, randint(100, 900), randint(100, 900)):
+    try:
+        while goto(token, randint(100, 900), randint(100, 900)):
+            pass
+    except:
         pass
-
+    urlopen('robot/'+token, method='DELETE')
 
 if __name__ == '__main__':
     main(sys.argv)

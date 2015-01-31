@@ -16,7 +16,7 @@ $(document).ready(function(){
                     $('.robot-list li#'+name).html(name+' - HP: '+parseInt(data.robots[k].hp));
                     if (!(name in robots)) {
                         robots[name] = data.robots[k];
-                        $('.board').append('<div class="robot" id="'+name+'" title="'+name+'">+</div>');
+                        $('.board').append('<div class="robot" id="'+name+'" title="'+name+'">'+name.charAt(0)+'</div>');
                         $('#'+name).css({left:parseInt(robots[name].x), bottom:parseInt(robots[name].y)});
                     } else {
 //                        if ($('#'+name).is(':animated')) {
