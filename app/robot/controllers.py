@@ -17,7 +17,7 @@ def check_token(original_function):
         if token in app.robot.hash_table:
             robot = app.robot.hash_table[token]
             assert isinstance(robot, Robot)
-            time.sleep(app.app.game_board_th.get_sleep_time())
+            time.sleep(app.app.game_board_th.get_sleep_time() / float(len(app.robot.hash_table)))
             return original_function(robot)
 
         resp = Response(response=json.dumps({'status': 'KO'}),
@@ -27,6 +27,24 @@ def check_token(original_function):
 
     return new_function
 
+
+# Set the route and accepted methods
+@mod_robot.route('/<token>', methods=['DELETE'])
+@check_token
+def delete_robot(robot):
+    name = robot.get_name()
+    if app.app.game_board.remove_robot(robot):
+        app.robot.hash_table = dict([(x, y) for (x, y) in app.robot.hash_table.items() if y != robot])
+        resp = Response(response=json.dumps({'status': 'OK', 'name': name}),
+                        status=200,
+                        mimetype="application/json")
+        return resp
+
+    resp = Response(response=json.dumps({'status': 'KO'}),
+                    status=500,
+                    mimetype="application/json")
+
+    return resp
 
 # Set the route and accepted methods
 @mod_robot.route('/', methods=['POST'])

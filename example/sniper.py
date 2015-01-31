@@ -24,7 +24,7 @@ def main():
         else:
             teta += resolution * 2
         data = json.loads(urlopen('robot/' + token).read())
-
+    urlopen('robot/'+token, method='DELETE')
 
 if __name__ == '__main__':
     main()

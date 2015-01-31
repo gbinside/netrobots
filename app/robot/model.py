@@ -31,7 +31,7 @@ class Robot:
         """
         # self._bullet_damage = ((40, 3), (20, 5), (5, 10))
         # changed to progessive damage
-        self._bullet_damage = ((40, 3), (20, 2), (5, 5))
+        self._bullet_damage = ((40, 30), (20, 20), (5, 50))
         self._reloading = False
         self._reloading_time = 2  # s
         self._reloading_counter = 0.0

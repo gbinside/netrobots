@@ -265,6 +265,28 @@ class AppTestCase(unittest.TestCase):
             {u'name': u'GUNDAM1', u'hp': 100, u'winner': False, u'dead': False, u'reloading': False, u'max_speed': 27,
              u'y': 500, u'x': 250, u'speed': 0, u'heading': 0}], u'explosions': {}, u'size': [1000, 1000]})
 
+    def test_delete_robot(self):
+        app.app.game_board.reinit()
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM'
+        ))
+
+        data = json.loads(rv.data)
+        token = data['token']
+        self.assertEqual(data['status'],'OK')
+
+        rv = self.app.delete('/v1/robot/'+token)
+
+        data = json.loads(rv.data)
+        self.assertEqual(data['status'],'OK')
+        self.assertEqual(data['name'],'GUNDAM')
+
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM'
+        ))
+
+        data = json.loads(rv.data)
+        self.assertEqual(data['status'],'OK')
 
 if __name__ == '__main__':
     unittest.main()

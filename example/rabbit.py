@@ -19,7 +19,7 @@ def urlopen(url, data=None, method='GET'):
     if data:
         request = urllib2.Request(url=BASE + url, data=urllib.urlencode(data), headers=content_header)
     else:
-        request = urllib2.Request(url=BASE + url)
+        request = urllib2.Request(url=BASE + url, headers=content_header)
     request.get_method = lambda: method
 
     response = urllib2.urlopen(request)
@@ -39,7 +39,7 @@ def goto(token, x, y):
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=100), 'PUT').read())
     data = json.loads(urlopen('robot/' + token).read())
     # 80 break distance
-    while distance(data['robot']['x'], data['robot']['y'], x, y) > 72.1 and data['robot']['speed'] > 0:
+    while distance(data['robot']['x'], data['robot']['y'], x, y) > 72.1 and data['robot']['speed'] > 0:  # breaking distance = approx 72.1 m
         data = json.loads(urlopen('robot/' + token).read())
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=0), 'PUT').read())
     while data['robot']['speed'] > 0:
@@ -49,8 +49,11 @@ def goto(token, x, y):
 
 
 def main(argv):
+    # create robot
     data = json.loads(urlopen('robot/', {'name': (argv[1] if len(argv) > 1 else 'RABBIT')}, 'POST').read())
+    # token is the signature to be used to send commands
     token = data['token']
+    # main loop - goto random position
     while goto(token, randint(100, 900), randint(100, 900)):
         pass
 

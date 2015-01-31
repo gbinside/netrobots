@@ -109,6 +109,12 @@ class Board:
             return True
         return False
 
+    def remove_robot(self, robot):
+        if robot.get_name() in self.robots:
+            del self.robots[robot.get_name()]
+            return True
+        return False
+
     def reinit(self, size=(1000, 1000)):
         self.__init__(size)
 

@@ -13,7 +13,7 @@ Per le varie rotte consultare gli esempi o il file `test.py`
 BOARD
 =====
 * L'arena è di 1000x1000 basata in 0,0 in basso a sinistra
-* gli angolo si misurano in gradi
+* gli angoli si misurano in gradi
 
               135    90   45
                   \  |  /
@@ -23,19 +23,19 @@ BOARD
                   /  |  \
               225   270   315
 
-* il robot occupa le sue coordinate, con una circonferenza di 1 (usata per il calcolo delle collisioni)
+* il robot occupa le sue coordinate, con una raggio di 1 (usato per il calcolo delle collisioni)
 
 ROBOT
 ======
 
-I robot sono tutti uguali. Ad esempio per fermarsi mentre si è a velocità massima (100) si impiegano 3 turni e 120 unità.
+I robot sono tutti uguali. Le costanti fisiche sono hardcodate per ora.
 
 CANNONATE
 =========
 
 I proiettili si intendono in tiro balistico, quindi non vengono considerate le eventuali collisioni inaspettate con robot di passaggio,
  perché non vi sono, inquanto i colpi viaggiano più in alto.
-I proiettili sparati fuori dall'arena esplodono fuori, non sollidono coi bordi per lo stesso motivo di cui sopra.
+I proiettili sparati fuori dall'arena esplodono fuori, non collidono coi bordi per lo stesso motivo di cui sopra.
 
 NOTE TECNICHE
 =============
