@@ -2,13 +2,12 @@
     display: none;
 }
 
-div.board {
+#board, div.board {
     position: relative;
     border: 1px solid black;
     width: 1000px;
     height: 1000px;
     overflow: hidden;
-
 }
 
 .robot {
@@ -30,7 +29,6 @@ div.board {
     display:block;
 }
 
-
 .radar {
     position: absolute;
 }
@@ -39,4 +37,10 @@ div.board {
     width:0;
     height:0;
     display:block;
+}
+
+#fps {
+    position: absolute;
+    top:0;
+    left:0;
 }
