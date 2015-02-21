@@ -35,19 +35,18 @@ def statuser(token):
 
 
 def slowdown(token):
-    json.loads(urlopen('robot/' + token + '/drive', dict(degree=robot['heading'], speed=12), 'PUT').read())
-    while robot['speed'] > 13:
+    json.loads(urlopen('robot/' + token + '/drive', dict(degree=robot['heading'], speed=10), 'PUT').read())
+    while robot['speed'] > 12:
         sleep(0.01)
 
 
 def goto(token):
     px = robot_extra['desidered_x']
     py = robot_extra['desidered_y']
-    dx = px - robot['x']
-    dy = py - robot['y']
-    heading = degrees(atan2(dy, dx))
-    if angle_distance(robot['heading'], heading) > 5 and robot['speed'] > 13:
+    heading = degrees(atan2(py - robot['y'], px - robot['x']))
+    if angle_distance(robot['heading'], heading) > 5 and robot['speed'] > 12:
         slowdown(token)
+        heading = degrees(atan2(py - robot['y'], px - robot['x']))
     # cambio rotta
     json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=100), 'PUT').read())
     # 80 break distance
