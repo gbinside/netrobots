@@ -190,6 +190,46 @@ class AppTestCase(unittest.TestCase):
         assert 'distance' in data
         assert int(data['distance']) == 353
 
+    def test_scan_4(self):
+        app.app.game_board.reinit()
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM1'
+        ))
+        data = json.loads(rv.data)
+        token = data['token']
+
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM2'
+        ))
+
+        rv = self.app.put('/v1/robot/' + token + '/drive', data=dict(
+            speed=100,
+            degree=90
+        ))
+
+        rv = self.app.put('/v1/robot/' + token + '/scan', data=dict(
+            degree=5,
+            resolution=10
+        ))
+        assert rv.status_code == 200
+        data = json.loads(rv.data)
+        assert 'status' in data
+        assert data['status'] == 'OK'
+        assert 'distance' in data
+        self.assertAlmostEqual(data['distance'], 500, delta=1)
+
+        rv = self.app.put('/v1/robot/' + token + '/scan', data=dict(
+            degree=10,
+            resolution=10
+        ))
+        assert rv.status_code == 200
+        data = json.loads(rv.data)
+        assert 'status' in data
+        assert data['status'] == 'OK'
+        assert 'distance' in data
+        self.assertEqual(data['distance'], 0)
+
+
     def test_drive_2(self):
         app.app.game_board.reinit()
         rv = self.app.post('/v1/robot/', data=dict(
