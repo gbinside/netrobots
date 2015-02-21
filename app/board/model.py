@@ -154,7 +154,7 @@ class Board:
                 continue
             distance, angle = robot.distance(xy)
             angle = (180 + angle) % 360
-            if self.angel_distance(angle, degree) > resolution:
+            if self.angle_distance(angle, degree) > resolution:
                 continue
             if distance > max_scan_distance:
                 continue
@@ -238,7 +238,7 @@ class Board:
         return clazz(self, name, len(self.robots))
 
     @staticmethod
-    def angel_distance(angle, degree):
+    def angle_distance(angle, degree):
         ret = (angle - degree) if angle > degree else (degree - angle)
         if ret > 180:
             ret = 360 - ret

@@ -115,7 +115,7 @@ class Robot:
         if self.is_dead():
             return False
         if self._reloading is False:
-            degree, distance = int(degree) % 360, min(int(float(distance)), self._max_fire_distance)
+            degree, distance = int(float(degree)) % 360, min(int(float(distance)), self._max_fire_distance)
             self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage,
                                       self)
             self._reloading = True

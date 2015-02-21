@@ -28,7 +28,7 @@ BOARD
 ROBOT
 ======
 
-I robot sono tutti uguali. Le costanti fisiche sono hardcodate per ora.
+_I robot sono tutti uguali. Le costanti fisiche sono hardcodate per ora._
 
 CANNONATE
 =========
@@ -40,11 +40,12 @@ I proiettili sparati fuori dall'arena esplodono fuori, non collidono coi bordi p
 NOTE TECNICHE
 =============
 
+la versione committata gira con un rapporto temporale di x2
 
 TODO
 =====
 
+* _I robot hanno tutti le stesse costanti di base, implementare un sistema a punti per personalizzarsi il robot._
 * Raffinare la logica di sterzo sopra la velocità massima di sterzo (`_max_sterling_speed`), magari con aggiunta di danno autoinflitto
 * L'urto con qualcosa infligge 2 punti di danno a prescindere dalla velocità al momento dell'impatto. Farlo dipendere dalla velocità?
-* I robot hanno tutti le stesse costanti di base, implementare un sistema a punti per personalizzarsi il robot.
 * Muri; ora l'arena è vuota, si potrebbere prevedere muri casuali, ma questo imporrebbe modifiche anche allo scanner.
