@@ -346,7 +346,39 @@ class AppTestCase(unittest.TestCase):
                                      u'bullet_damage': [[40, 3], [20, 2], [5, 5]], u'reloading_counter': 0.0,
                                      u'max_fire_distance': 700, u'required_speed': 0, u'decelleration': -5,
                                      u'max_sterling_speed': 13, u'reloading_time': 2, u'max_speed': 27,
-                                     u'name': u'GUNDAM'}})
+                                     u'name': u'GUNDAM', u'max_hit_points': 100}})
+
+    def test_new_robot_not_default(self):
+        app.app.game_board.reinit()
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM',
+
+            max_hit_points=84,
+            max_speed=30,
+            acceleration=10,
+            decelleration=-10,
+            max_sterling_speed=8,
+            max_scan_distance=600,
+            max_fire_distance=600,
+            bullet_speed=700,
+            bullet_damage=json.dumps(((68, 1), (20, 2), (5, 5))),
+            reloading_time=1,
+        ))
+        data = json.loads(rv.data)
+        assert 'status' in data
+        assert data['status'] == 'OK'
+
+        token = data['token']
+
+        rv = self.app.get('/v1/robot/' + token + '/data')
+        data = json.loads(rv.data)
+        self.assertEqual(data, {u'status': u'OK', u'robot': {u'acceleration': 10, u'bullet_speed': 700,
+                                                             u'bullet_damage': [[68, 1], [20, 2], [5, 5]],
+                                                             u'max_scan_distance': 600, u'max_fire_distance': 600,
+                                                             u'required_speed': 0, u'decelleration': -10,
+                                                             u'max_sterling_speed': 8, u'max_hit_points': 84,
+                                                             u'reloading_time': 1, u'max_speed': 30,
+                                                             u'reloading_counter': 0.0, u'name': u'GUNDAM'}})
 
 
 if __name__ == '__main__':

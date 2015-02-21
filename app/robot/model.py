@@ -7,10 +7,11 @@ START_HEADING = [0, 180, 90, 270, 45, 225, 135, 315]
 
 
 class Robot:
-    def __init__(self, board, name, count_of_other=0):
+    def __init__(self, board, name, count_of_other=0, configuration=None):
         self._board = board
         self._name = name
-        self._hit_points = 100
+        self._max_hit_points = 100
+        self._hit_points = self._max_hit_points
         self._winner = False
         self._dead = False
         self._x, self._y = START_COORDS[count_of_other % len(START_COORDS)]
@@ -36,14 +37,34 @@ class Robot:
         self._reloading_time = 2  # s
         self._reloading_counter = 0.0
 
+        for k, v in configuration.items():
+            if v is not None:
+                if hasattr(self, '_' + k):
+                    setattr(self, '_' + k, v)
+
         if not app.app.config['TESTING']:
             self._x, self._y = randint(100, 900), randint(100, 900)
 
         self._board.add_robot(self)
 
+    def calc_value(self):
+        return sum([
+            self._max_hit_points,
+            2 * self._max_speed,
+            2 * self._acceleration,
+            -2 * self._decelleration,
+            2 * self._max_sterling_speed,
+            0.01 * self._max_scan_distance,
+            0.01 * self._max_fire_distance,
+            0.01 * self._bullet_speed,
+            0.005 * pi * sum([(x[0] ** 2) * x[1] for x in self._bullet_damage]),
+            10 * (3 - self._reloading_time),
+        ])
+
     def get_data(self):
         return dict(
             name=self._name,
+            max_hit_points=self._max_hit_points,
             required_speed=self._required_speed,
             max_speed=self._max_speed,
             acceleration=self._acceleration,
@@ -167,3 +188,4 @@ class Robot:
 
     def is_dead(self):
         return self._dead
+
