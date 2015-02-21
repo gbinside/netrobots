@@ -41,6 +41,22 @@ class Robot:
 
         self._board.add_robot(self)
 
+    def get_data(self):
+        return dict(
+            name=self._name,
+            required_speed=self._required_speed,
+            max_speed=self._max_speed,
+            acceleration=self._acceleration,
+            decelleration=self._decelleration,
+            max_sterling_speed=self._max_sterling_speed,
+            max_scan_distance=self._max_scan_distance,
+            max_fire_distance=self._max_fire_distance,
+            bullet_speed=self._bullet_speed,
+            bullet_damage=self._bullet_damage,
+            reloading_time=self._reloading_time,
+            reloading_counter=self._reloading_counter
+        )
+
     def get_status(self):
         return dict(
             name=self._name,

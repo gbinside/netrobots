@@ -89,6 +89,14 @@ def status(robot):
                     mimetype="application/json")
     return resp
 
+@mod_robot.route('/<token>/data', methods=['GET'])
+@check_token
+def status(robot):
+    resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_data()}),
+                    status=200,
+                    mimetype="application/json")
+    return resp
+
 
 @mod_robot.route('/<token>/drive', methods=['PUT'])
 @check_token
