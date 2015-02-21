@@ -78,7 +78,13 @@ def new_robot():
             if name not in app.app.game_board.robots:
                 _new_robot = Robot(app.app.game_board, name, count_of_other=len(app.app.game_board.robots),
                                    configuration=extra)
-                assert _new_robot.calc_value() < 327
+                if _new_robot.calc_value() > 327:
+                    resp = Response(response=json.dumps({'status': 'KO',
+                                                         'msg': "Robot too big: max points are 327; yours points: " +
+                                                                str(_new_robot.calc_value())}),
+                                    status=500,
+                                    mimetype="application/json")
+                    return resp
 
                 app.app.game_board.robots[name] = _new_robot
                 token = md5(name + time.strftime('%c')).hexdigest()
