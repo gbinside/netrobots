@@ -15,7 +15,7 @@ class AppTestCase(unittest.TestCase):
         app.app.game_board.reinit()
         rv = self.app.get('/v1/board/')
         self.assertEqual(json.loads(rv.data), {'size': [1000, 1000], 'robots': [], 'missiles': {}, 'explosions': {},
-                                       'radar': {}, 'kdr': {}})
+                                               'radar': {}, 'kdr': {}})
 
     def test_new_robot(self):
         app.app.game_board.reinit()
@@ -303,7 +303,7 @@ class AppTestCase(unittest.TestCase):
         data = json.loads(rv.data)
         self.assertEqual(data, {u'radar': {}, u'missiles': {}, u'robots': [
             {u'name': u'GUNDAM1', u'hp': 100, u'winner': False, u'dead': False, u'reloading': False, u'max_speed': 27,
-             u'y': 500, u'x': 250, u'speed': 0, u'heading': 0}], u'explosions': {}, u'size': [1000, 1000], u'kdr':{}})
+             u'y': 500, u'x': 250, u'speed': 0, u'heading': 0}], u'explosions': {}, u'size': [1000, 1000], u'kdr': {}})
 
     def test_delete_robot(self):
         app.app.game_board.reinit()
@@ -313,20 +313,41 @@ class AppTestCase(unittest.TestCase):
 
         data = json.loads(rv.data)
         token = data['token']
-        self.assertEqual(data['status'],'OK')
+        self.assertEqual(data['status'], 'OK')
 
-        rv = self.app.delete('/v1/robot/'+token)
+        rv = self.app.delete('/v1/robot/' + token)
 
         data = json.loads(rv.data)
-        self.assertEqual(data['status'],'OK')
-        self.assertEqual(data['name'],'GUNDAM')
+        self.assertEqual(data['status'], 'OK')
+        self.assertEqual(data['name'], 'GUNDAM')
 
         rv = self.app.post('/v1/robot/', data=dict(
             name='GUNDAM'
         ))
 
         data = json.loads(rv.data)
-        self.assertEqual(data['status'],'OK')
+        self.assertEqual(data['status'], 'OK')
+
+    def test_get_data(self):
+        app.app.game_board.reinit()
+        rv = self.app.post('/v1/robot/', data=dict(
+            name='GUNDAM'
+        ))
+
+        data = json.loads(rv.data)
+        token = data['token']
+        self.assertEqual(data['status'], 'OK')
+
+        rv = self.app.get('/v1/robot/' + token + '/data')
+        data = json.loads(rv.data)
+        self.assertEqual(data,
+                         {u'status': u'OK',
+                          u'robot': {u'acceleration': 9, u'max_scan_distance': 700, u'bullet_speed': 500,
+                                     u'bullet_damage': [[40, 3], [20, 2], [5, 5]], u'reloading_counter': 0.0,
+                                     u'max_fire_distance': 700, u'required_speed': 0, u'decelleration': -5,
+                                     u'max_sterling_speed': 13, u'reloading_time': 2, u'max_speed': 27,
+                                     u'name': u'GUNDAM'}})
+
 
 if __name__ == '__main__':
     unittest.main()
