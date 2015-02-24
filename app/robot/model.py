@@ -7,10 +7,11 @@ START_HEADING = [0, 180, 90, 270, 45, 225, 135, 315]
 
 
 class Robot:
-    def __init__(self, board, name, count_of_other=0):
+    def __init__(self, board, name, count_of_other=0, configuration=None):
         self._board = board
         self._name = name
-        self._hit_points = 100
+        self._max_hit_points = 100
+        self._hit_points = self._max_hit_points
         self._winner = False
         self._dead = False
         self._x, self._y = START_COORDS[count_of_other % len(START_COORDS)]
@@ -34,7 +35,7 @@ class Robot:
         self._bullet_damage = ((40, 3), (20, 2), (5, 5))
 
         self._scanning = False
-        self._scanning_time = 0.5  # s, set to zero for no waiting time on scanner
+        self._scanning_time = 0  # s, set to zero for no waiting time on scanner
         self._scanning_counter = 0.0
 
         self._reloading = False
@@ -46,10 +47,46 @@ class Robot:
         self._bursting_reload_time = self._reloading_time*2  # s
         self._bursting_counter = 0.0
 
+        for k, v in configuration.items():
+            if v is not None:
+                if hasattr(self, '_' + k):
+                    setattr(self, '_' + k, v)
+
         if not app.app.config['TESTING']:
             self._x, self._y = randint(100, 900), randint(100, 900)
 
         self._board.add_robot(self)
+
+    def calc_value(self):
+        return sum([
+            self._max_hit_points,
+            2 * self._max_speed,
+            2 * self._acceleration,
+            -2 * self._decelleration,
+            2 * self._max_sterling_speed,
+            0.01 * self._max_scan_distance,
+            0.01 * self._max_fire_distance,
+            0.01 * self._bullet_speed,
+            0.005 * pi * sum([(x[0] ** 2) * x[1] for x in self._bullet_damage]),
+            10 * (3 - self._reloading_time),
+        ])
+
+    def get_data(self):
+        return dict(
+            name=self._name,
+            max_hit_points=self._max_hit_points,
+            required_speed=self._required_speed,
+            max_speed=self._max_speed,
+            acceleration=self._acceleration,
+            decelleration=self._decelleration,
+            max_sterling_speed=self._max_sterling_speed,
+            max_scan_distance=self._max_scan_distance,
+            max_fire_distance=self._max_fire_distance,
+            bullet_speed=self._bullet_speed,
+            bullet_damage=self._bullet_damage,
+            reloading_time=self._reloading_time,
+            reloading_counter=self._reloading_counter
+        )
 
     def get_status(self):
         # calculate reloading time left
@@ -106,7 +143,7 @@ class Robot:
             return False
         if self._reloading is False:
             if self._bursting is False:
-                degree, distance = int(degree) % 360, min(int(float(distance)), self._max_fire_distance)
+                degree, distance = int(float(degree)) % 360, min(int(float(distance)), self._max_fire_distance)
                 self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage,
                                           self)
                 self._reloading = True
@@ -211,3 +248,4 @@ class Robot:
 
     def is_dead(self):
         return self._dead
+

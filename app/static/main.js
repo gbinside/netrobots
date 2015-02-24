@@ -9,7 +9,7 @@ var statsTab            = true; // use TAB STATS or DIV STATS
 var REFRESH_TIME        = 1000/REFRESH_RATE; // time interval between updates
 var TIME_SLOT_RATE      = 1000/TIME_SLOT; // how many data request in a second
 var DELAY_FACTOR        = 1.0;  // delay based on server's times intervals
-// STATS TAB variable
+// KEYBOARD variable
 var showStatsTab = false;
 var alwaysShowStatsTab  = true; // always show STATS
 // FPS variable
@@ -410,6 +410,7 @@ $(document).ready(function(){
                             }
                             // kdr
                             robots[name].kdr = kdr;
+                            robots[name].speed = speed;
                         }
 
                         // stats
@@ -510,6 +511,10 @@ $(document).ready(function(){
             }
         }else if (keyCode == 81 || keyCode == 113) {//q OR Q
             alwaysShowStatsTab = !alwaysShowStatsTab;
+        }else if (keyCode == 87 || keyCode == 119) {//w OR W
+            drawReloadingPopup = !drawReloadingPopup;
+        }else if (keyCode == 69 || keyCode == 101) {//e OR E
+            drawDmgPopup = !drawDmgPopup;
         }
     });
     $(document).keyup(function(e) {

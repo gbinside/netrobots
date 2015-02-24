@@ -150,12 +150,13 @@ class Board:
         self._radar[key] = dict(xy=xy, degree=degree, resolution=resolution, distance=max_scan_distance,
                                 spawntime=time.time())
         ret = []
+        degree %= 360
         for robot in [x for x in self.robots.values() if x != scanning_robot]:
             if robot.is_dead():
                 continue
             distance, angle = robot.distance(xy)
             angle = (180 + angle) % 360
-            if angle > degree + resolution or angle < degree - resolution:
+            if self.angle_distance(angle, degree) > resolution:
                 continue
             if distance > max_scan_distance:
                 continue
@@ -237,3 +238,10 @@ class Board:
 
     def new_robot(self, clazz, name):
         return clazz(self, name, len(self.robots))
+
+    @staticmethod
+    def angle_distance(angle, degree):
+        ret = (angle - degree) if angle > degree else (degree - angle)
+        if ret > 180:
+            ret = 360 - ret
+        return ret

@@ -67,7 +67,7 @@ def main():
                     continue
             else:
                 try:
-                    print 'robot/' + token + '/cannon', {'degree': teta, 'distance': dist}, 'PUT'
+                    #print 'robot/' + token + '/cannon', {'degree': teta, 'distance': dist}, 'PUT'
                     json.loads(
                         urlopen('robot/' + token + '/cannon', {'degree': teta, 'distance': dist}, 'PUT').read())
                 except HTTPError:

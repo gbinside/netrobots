@@ -22,11 +22,14 @@
             <h4>Hotkeys</h4>
             <p> Q - press to enable or disable fixed stats.</p>
             <p> TAB - press and hold for showing stats and release for hiding.</p>
+            <p> W - press to enable or disable reloading popups.</p>
+            <p> E - press to enable or disable damage popups.</p>
         </div>
     </div>
 </section>
 {% endblock %}
 
 {% block aftercontent %}
+<a href="/nocanvas">nocanvas version</a>
 <script src="{{ url_for('static', filename='main.js') }}"></script>
 {% endblock %}
