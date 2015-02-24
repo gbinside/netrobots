@@ -7,7 +7,7 @@ import sys
 
 __author__ = 'roberto'
 
-BASE = 'http://192.168.1.105:8080/v1/'
+BASE = 'http://127.0.0.1:8080/v1/'
 
 
 def urlopen(url, data=None, method='GET'):
