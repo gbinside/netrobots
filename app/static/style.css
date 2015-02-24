@@ -1,3 +1,7 @@
+* {
+
+}
+
 .debug {
     display: none;
 }
@@ -9,7 +13,20 @@
     height: 1000px;
     overflow: hidden;
 }
+#fps {
+    position: absolute;
+    top:0;
+    left:0;
+}
 
+.reset-game {
+    margin-left:30px;
+}
+
+
+
+
+/*No Canvas*/
 .robot {
     position: absolute;
     margin-left:-4px;
@@ -37,10 +54,4 @@
     width:0;
     height:0;
     display:block;
-}
-
-#fps {
-    position: absolute;
-    top:0;
-    left:0;
 }

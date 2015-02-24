@@ -23,3 +23,10 @@ CSRF_SESSION_KEY = "p4ssw0rd"
 SECRET_KEY = "p4ssw0rd"
 
 SITENAME = "Netrobots API"
+
+# THREAD TIMES
+# The division DELTATIME/SLEEPTIME define the delay ratio of 
+# the application.
+DELTATIME = 0.125                 # single tick time
+DELAYRATE = 1
+SLEEPTIME = DELTATIME*DELAYRATE   # sleep time

@@ -145,3 +145,25 @@ def cannon(robot):
                     status=406,
                     mimetype="application/json")
     return resp
+
+
+@mod_robot.route('/<token>/burst', methods=['PUT'])
+@check_token
+def burst(robot):
+    # start
+    degree_s = request.form['degree_start']
+    distance_s = request.form['distance_start']
+    # end
+    degree_e = request.form['degree_end']
+    distance_e = request.form['distance_end']
+    ret = robot.burst(degree_s, distance_s, degree_e, distance_e)
+    if ret:
+        resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_status(), 'done': ret}),
+                        status=200,
+                        mimetype="application/json")
+        return resp
+
+    resp = Response(response=json.dumps({'status': 'KO', 'robot': robot.get_status(), 'done': ret}),
+                    status=406,
+                    mimetype="application/json")
+    return resp

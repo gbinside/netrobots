@@ -1,5 +1,7 @@
 from flask import Flask, render_template, flash
 from board.model import Board, BoardThread
+from config import DELTATIME
+from config import SLEEPTIME
 
 # Define the WSGI application object
 app = Flask(__name__)
@@ -23,7 +25,7 @@ app.register_blueprint(board_module)
 app.register_blueprint(viewer_module)
 app.register_blueprint(robot_module)
 
-app.game_board = Board()
-app.game_board_th = BoardThread(app.game_board.tick, 0.125, 0.250)
+app.game_board = Board(float(DELTATIME/float(SLEEPTIME)))
+app.game_board_th = BoardThread(app.game_board.tick, DELTATIME, SLEEPTIME)
 app.game_board_th.daemon = True
 app.game_board_th.start()

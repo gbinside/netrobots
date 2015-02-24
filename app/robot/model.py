@@ -32,9 +32,19 @@ class Robot:
         # self._bullet_damage = ((40, 3), (20, 5), (5, 10))
         # changed to progessive damage
         self._bullet_damage = ((40, 3), (20, 2), (5, 5))
+
+        self._scanning = False
+        self._scanning_time = 0.5  # s, set to zero for no waiting time on scanner
+        self._scanning_counter = 0.0
+
         self._reloading = False
         self._reloading_time = 2  # s
         self._reloading_counter = 0.0
+
+        self._burst_number = 3  # num of missiles
+        self._bursting = False
+        self._bursting_reload_time = self._reloading_time*2  # s
+        self._bursting_counter = 0.0
 
         if not app.app.config['TESTING']:
             self._x, self._y = randint(100, 900), randint(100, 900)
@@ -42,6 +52,13 @@ class Robot:
         self._board.add_robot(self)
 
     def get_status(self):
+        # calculate reloading time left
+        relTimer = 0
+        if self._reloading:
+            relTimer = float(self._reloading_time - self._reloading_counter)
+        elif self._bursting:
+            relTimer = float(self._bursting_reload_time - self._bursting_counter)
+            
         return dict(
             name=self._name,
             hp=self._hit_points,
@@ -52,7 +69,10 @@ class Robot:
             dead=self._dead,
             winner=self._winner,
             max_speed=self._max_speed,
-            reloading=self._reloading
+            scanning=self._scanning,
+            reloading=self._reloading,
+            bursting=self._bursting,
+            reloading_timer=relTimer
         )
 
     def drive(self, degree, speed):
@@ -70,20 +90,46 @@ class Robot:
     def scan(self, degree, resolution):
         if self.is_dead():
             return False
-        degree, resolution = int(degree) % 360, max(1, int(resolution))
-        distance = self._board.radar(self, (self._x, self._y), self._max_scan_distance, degree, resolution)
+        if self._scanning is False:
+            degree, resolution = int(degree) % 360, max(1, int(resolution))
+            distance = self._board.radar(self, (self._x, self._y), self._max_scan_distance, degree, resolution)
+            # avoid setting the counter if is setted no delay for the scanner
+            if self._scanning_time != 0:
+                self._scanning = True
+                self._scanning_counter = 0.0
+        else:
+            return False
         return distance
 
     def cannon(self, degree, distance):
         if self.is_dead():
             return False
         if self._reloading is False:
-            degree, distance = int(degree) % 360, min(int(float(distance)), self._max_fire_distance)
-            self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage,
-                                      self)
-            self._reloading = True
-            self._reloading_counter = 0.0
-            return True
+            if self._bursting is False:
+                degree, distance = int(degree) % 360, min(int(float(distance)), self._max_fire_distance)
+                self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage,
+                                          self)
+                self._reloading = True
+                self._reloading_counter = 0.0
+                return True
+        return False
+
+    def burst(self, degree_s, distance_s, degree_e, distance_e):
+        if self.is_dead():
+            return False
+        if self._bursting is False:
+            if self._reloading is False:
+                if (int(self._current_speed) == 0):
+                    delta_degree = (int(degree_e) - int(degree_s))/float(self._burst_number)
+                    delta_dist   = (int(float(distance_e)) - int(float(distance_s)))/float(self._burst_number)
+                    degree, distance = int(degree_s) % 360, min(int(float(distance_s)), self._max_fire_distance)
+                    for i in range(0,self._burst_number):
+                        self._board.spawn_missile((self._x, self._y), degree, distance, self._bullet_speed, self._bullet_damage,
+                                              self)
+                        degree, distance = int(degree + delta_degree) % 360, min(int(float(distance + delta_dist)), self._max_fire_distance)
+                    self._bursting = True
+                    self._bursting_counter = 0.0
+                    return True
         return False
 
     def distance(self, xy):
@@ -104,12 +150,26 @@ class Robot:
         self._required_speed = 0
 
     def tick(self, deltatime):
+        # SCANNING
+        if self._scanning:
+            self._scanning_counter += deltatime
+            if self._scanning_counter >= self._scanning_time:
+                self._scanning = False
+                self._scanning_counter = 0.0
+
         # RELOADING
         if self._reloading:
             self._reloading_counter += deltatime
             if self._reloading_counter >= self._reloading_time:
                 self._reloading = False
                 self._reloading_counter = 0.0
+
+        # BURSTING
+        if self._bursting:
+            self._bursting_counter += deltatime
+            if self._bursting_counter >= self._bursting_reload_time:
+                self._bursting = False
+                self._bursting_counter = 0.0
 
         # SPEED calculation with accelleration/decelleration limit
         if self._current_speed <= self._required_speed:
