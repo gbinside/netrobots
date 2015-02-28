@@ -1,8 +1,12 @@
 
 // -TO SET-
-var TIME_SLOT           = 500; // time interval between ajax data request
+var TIME_SLOT           = 200; // time interval between ajax data request
 var REFRESH_RATE        = 30; // how many times boards must be refreshed in a second
 var statsTab            = true; // use TAB STATS or DIV STATS
+// ROBOT GARBAGE
+// max time for a robot to do something otherwise it'll considered dead
+// simply will be reloaded if it appears again in the data from the ajax request
+var MAX_TIME_ROBOT_DEAD = Math.ceil(REFRESH_RATE);
 
 
 // -TO NOT SET-
@@ -15,6 +19,7 @@ var alwaysShowStatsTab  = true; // always show STATS
 // FPS variable
 var FPScounter = 0;
 var lastTime;
+
 // DEBUG
 var getDataRobot = true,
     getDataRadar = true,
@@ -43,6 +48,7 @@ function Robot(name,hp,x,y,dx,dy,speed,kdr) {
     this.kdr=kdr;
     this.interval=null;
     this.reloading_timer=0;
+    this.step = MAX_TIME_ROBOT_DEAD;
 }
 
 function RobotMove (i) {
@@ -315,6 +321,12 @@ var update = function () {
     for (k in robots) {
         if (robots.hasOwnProperty(k)) {
             RobotMove(k);
+            // consider robot dead if not found in data.robots for a
+            // MAX_TIME_ROBOT_DEAD steps
+            --robots[k].step;
+            if (robots[k].step <= 0) {
+                delete robots[k];
+            }
         }
     }
     for (k in radars) {
@@ -368,12 +380,14 @@ var update = function () {
 };
 
 $(document).ready(function(){
+    var count=0;
     var interval = setInterval(function () {
         $.get('/v1/board/', function (data) {
             var k;
             $('.robot-list').html('');
             DELAY_FACTOR = data['delayfactor'];
             if (getDataRobot) {
+                ++count;
                 for (k in data.robots) {
                     if (data.robots.hasOwnProperty(k)) {
 
@@ -411,6 +425,8 @@ $(document).ready(function(){
                             // kdr
                             robots[name].kdr = kdr;
                             robots[name].speed = speed;
+                            // reset
+                            robots[name].step = MAX_TIME_ROBOT_DEAD;
                         }
 
                         // stats
@@ -419,6 +435,7 @@ $(document).ready(function(){
                             $('.robot-list li#'+name).html(name+' - HP: '+hp+' - SP: '+ speed + ' - KDR: ' + kdr.kill + '/' + kdr.death);
                         }
                     }
+                    // $('.debug').html($('.debug').text()+count+name);
                 }
             }
             if (getDataRadar) {
