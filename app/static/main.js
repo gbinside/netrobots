@@ -1,12 +1,12 @@
 
 // -TO SET-
-var TIME_SLOT           = 200; // time interval between ajax data request
+var TIME_SLOT           = 450; // time interval between ajax data request
 var REFRESH_RATE        = 30; // how many times boards must be refreshed in a second
 var statsTab            = true; // use TAB STATS or DIV STATS
 // ROBOT GARBAGE
 // max time for a robot to do something otherwise it'll considered dead
 // simply will be reloaded if it appears again in the data from the ajax request
-var MAX_TIME_ROBOT_DEAD = Math.ceil(REFRESH_RATE);
+var MAX_TIME_ROBOT_DEAD = Math.ceil(2*REFRESH_RATE);
 
 
 // -TO NOT SET-
@@ -35,6 +35,17 @@ var drawRobot = true,
 // Robots
 var robots = [];
 
+var paletteColors = [
+    '#CC00CC', // viola
+    '#3333FF', // blu
+    '#009999', // verde-acqua
+    '#009933', // verde
+    '#999966', // verde-grigio
+    '#FF9900', // arancione
+    '#CC3333', // rosso
+    '#996633'  // marrone
+];
+
 function Robot(name,hp,x,y,dx,dy,speed,kdr) {
     this.name=name;
     this.hp=hp;
@@ -49,6 +60,27 @@ function Robot(name,hp,x,y,dx,dy,speed,kdr) {
     this.interval=null;
     this.reloading_timer=0;
     this.step = MAX_TIME_ROBOT_DEAD;
+    this.color = GetColor();
+}
+/**
+ * @return {string}
+*/
+function GetColor () {
+    var colors = paletteColors;
+    for(var k in robots) {
+        for(var i=0; i<colors.length; ++i) {
+            if (robots.hasOwnProperty(k)) {
+                if (robots[k].color==colors[i]) {
+                    colors.splice(i, 1);
+                }
+            }
+        }
+    }
+    if (colors.length>0) {
+        return colors[Math.floor(Math.random()*colors.length)];
+    } else {
+        return paletteColors[Math.floor(Math.random()*paletteColors.length)];
+    }
 }
 
 function RobotMove (i) {
@@ -160,8 +192,7 @@ var render = function () {
     if (drawRobot) {
         for (k in robots) {
             if (robots.hasOwnProperty(k)) {
-                ctx.fillStyle = "#008800";
-                ctx.strokeStyle = "#008800";
+                ctx.fillStyle = ctx.strokeStyle = robots[k].color;
 
                 // draw robot's NAME + HP
                 tempfont = ctx.font;
@@ -170,17 +201,12 @@ var render = function () {
                 ctx.font = tempfont;
 
                 if (showStatsTab || alwaysShowStatsTab) {
-                    ctx.fillStyle = "#008800";
-                    ctx.strokeStyle = "#008800";
                     // draw robot's SP, KDA
                     tempfont = ctx.font;
                     ctx.font="14px Verdana";
                     ctx.fillText("KDA: "+robots[k].kdr.kill+'/'+robots[k].kdr.death+", SP:"+robots[k].speed, robots[k].x+10, robots[k].y+10);
                     ctx.font = tempfont;
                 }
-
-                ctx.fillStyle = "#008800";
-                ctx.strokeStyle = "#008800";
 
                 // draw robot's shape
                 ctx.beginPath();
@@ -380,14 +406,12 @@ var update = function () {
 };
 
 $(document).ready(function(){
-    var count=0;
     var interval = setInterval(function () {
         $.get('/v1/board/', function (data) {
             var k;
             $('.robot-list').html('');
             DELAY_FACTOR = data['delayfactor'];
             if (getDataRobot) {
-                ++count;
                 for (k in data.robots) {
                     if (data.robots.hasOwnProperty(k)) {
 
@@ -435,7 +459,6 @@ $(document).ready(function(){
                             $('.robot-list li#'+name).html(name+' - HP: '+hp+' - SP: '+ speed + ' - KDR: ' + kdr.kill + '/' + kdr.death);
                         }
                     }
-                    // $('.debug').html($('.debug').text()+count+name);
                 }
             }
             if (getDataRadar) {
