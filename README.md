@@ -40,7 +40,33 @@ I proiettili sparati fuori dall'arena esplodono fuori, non collidono coi bordi p
 NOTE TECNICHE
 =============
 
-la versione committata gira con un rapporto temporale di x2
+La versione committata gira con un rapporto temporale di x2
+
+GETTING STARTED
+===============
+
+For Ubuntu/Debian
+
+  sudo aptitude install python-flask
+  python run.py
+
+Open the browser on
+
+  http://localhost:8080/
+
+Launch some demo robot
+
+  cd example/python
+  python rabbit.py
+  python sniper.py
+
+ROBOTS CODING INSTRUCTIONS
+==========================
+
+Programming Language
+--------------------
+
+Robots can be written using any programming language, because they communicate with the server, using http requests.
 
 TODO
 =====

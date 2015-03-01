@@ -3,6 +3,7 @@ from math import cos, sin, radians, atan2
 import threading
 import time
 
+# TODO fra un sleep e l'altro dovrebbe solo aggiornare lo stato e aggiornare il time globale accessibile in modo lock
 
 class BoardThread(threading.Thread):
     def __init__(self, tick, deltatime, sleep_time=None):
@@ -13,12 +14,17 @@ class BoardThread(threading.Thread):
 
     def run(self):
         while 1:
-            self._tick(self._deltatime)
-            time.sleep(self._sleep_time)
+          next_wake_time = time.clock() + self._sleep_time
+
+          # update the status, using the status update function passed as parameter during initialization
+          self._tick(self._deltatime)
+
+          next_pause = next_wake_time  - time.clock()
+          if next_pause > 0:
+            time.sleep(next_pause)
 
     def get_sleep_time(self):
         return self._sleep_time
-
 
 class Missile:
     def __init__(self, board, xy, degree, distance, speed, damage, owner=None):
@@ -106,6 +112,7 @@ class RobotAlreadyExistsException(Exception):
 
 class Board:
     def __init__(self, size=(1000, 1000)):
+        self._global_time = 0
         self._size = size
         self.robots = {}
         self._missiles = {}
@@ -114,6 +121,9 @@ class Board:
         self._wall_hit_damage = 2
         self._join_status = None
         self.kdr = {}
+
+    def global_time(self):
+        return self._global_time
 
     def add_robot(self, robot):
         if robot.get_name() not in self.robots:
@@ -137,7 +147,8 @@ class Board:
             missiles=dict([(k, v.get_status()) for k, v in self._missiles.items()]),
             explosions=dict([(k, v.get_status()) for k, v in self._explosions.items()]),
             radar=dict(self._radar),
-            kdr=self.kdr
+            kdr=self.kdr,
+            global_time=self._global_time
         )
         self._radar = dict([(k, v) for k, v in self._radar.items() if v['spawntime'] + 1.0 > time.time()])
         return ret
@@ -222,6 +233,8 @@ class Board:
         self._explosions = dict([(k, x) for k, x in self._explosions.items() if x != explosion])
 
     def tick(self, deltatime=0.125):
+        self._global_time = self._global_time + deltatime
+
         # manage missiles
         for m in self._missiles.values():
             assert isinstance(m, Missile)

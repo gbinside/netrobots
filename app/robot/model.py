@@ -8,6 +8,14 @@ START_HEADING = [0, 180, 90, 270, 45, 225, 135, 315]
 
 class Robot:
     def __init__(self, board, name, count_of_other=0, configuration=None):
+
+        self.scan_degree = None
+        self.scan_resolution = None
+        self.scan_distance = None
+        self.fired_new_missile = False
+
+        self.last_command_executed_at_global_time = -1
+
         self._board = board
         self._name = name
         self._max_hit_points = 100
@@ -75,7 +83,8 @@ class Robot:
             bullet_speed=self._bullet_speed,
             bullet_damage=self._bullet_damage,
             reloading_time=self._reloading_time,
-            reloading_counter=self._reloading_counter
+            reloading_counter=self._reloading_counter,
+            fired_new_missile=self.fired_new_missile
         )
 
     def get_status(self):
@@ -89,7 +98,11 @@ class Robot:
             dead=self._dead,
             winner=self._winner,
             max_speed=self._max_speed,
-            reloading=self._reloading
+            reloading=self._reloading,
+            is_dead=self.is_dead(),
+            scan_degree=self.scan_degree,
+            scan_resolution=self.scan_resolution,
+            scan_distance=self.scan_distance
         )
 
     def drive(self, degree, speed):
@@ -109,10 +122,23 @@ class Robot:
             return False
         degree, resolution = int(degree) % 360, max(1, int(resolution))
         distance = self._board.radar(self, (self._x, self._y), self._max_scan_distance, degree, resolution)
-        return distance
+
+        self.scan_degree = degree
+        self.scan_resolution = resolution
+        self.scan_distance = distance
+
+        return True
+
+    def no_scan(self):
+        self.scan_degree = None
+        self.scan_resolution = None
+        self.scan_distance = None
+
+        return True
 
     def cannon(self, degree, distance):
         if self.is_dead():
+            self.fired_new_missile = False
             return False
         if self._reloading is False:
             degree, distance = int(float(degree)) % 360, min(int(float(distance)), self._max_fire_distance)
@@ -120,8 +146,15 @@ class Robot:
                                       self)
             self._reloading = True
             self._reloading_counter = 0.0
+
+            self.fired_new_missile = True
             return True
+
+        self.fired_new_missile = False
         return False
+
+    def no_cannon(self):
+        self.fired_new_missile = False
 
     def distance(self, xy):
         if isinstance(xy, Robot):
