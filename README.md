@@ -1,7 +1,57 @@
 NETROBOT - Realtime
 ===================
 
+An experimental fork of [https://github.com/gbinside/netrobots]
+
 Liberamente basato su P-ROBOTS [http://corewar.co.uk/probots/p-robo4.txt]
+
+Getting Started
+===============
+
+Package Requirements
+--------------------
+
+On Debian/Ubuntu
+
+  sudo aptitude install python-flask protbuf-compiler libzmq3 libzmq3-dev python-zmq
+
+Starting
+--------
+
+On main directory
+
+  python run.py
+
+Open the browser on
+
+  http://localhost:8080/
+
+Launch some demo robot
+
+  cd example/python
+  python rabbit.py
+  python sniper.py
+
+Robots Coding Instructions
+==========================
+
+Programming Language
+--------------------
+
+Robots can be written using any programming language, because they communicate with the server using:
+* Proto Buffers serialization library
+* ZeroMQ message API
+
+API
+---
+
+See the file
+
+  server/netrobots.proto
+
+for a description of available messages.
+
+See the example directory, for examples of API usage.
 
 WEBSERVER
 =========
@@ -42,31 +92,6 @@ NOTE TECNICHE
 
 La versione committata gira con un rapporto temporale di x2
 
-GETTING STARTED
-===============
-
-For Ubuntu/Debian
-
-  sudo aptitude install python-flask
-  python run.py
-
-Open the browser on
-
-  http://localhost:8080/
-
-Launch some demo robot
-
-  cd example/python
-  python rabbit.py
-  python sniper.py
-
-ROBOTS CODING INSTRUCTIONS
-==========================
-
-Programming Language
---------------------
-
-Robots can be written using any programming language, because they communicate with the server, using http requests.
 
 TODO
 =====
