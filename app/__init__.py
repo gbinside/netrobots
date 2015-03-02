@@ -1,5 +1,4 @@
 from flask import Flask, render_template, flash
-import zmq
 from server.game_server import WakeUpThread, GameThread
 
 app = Flask(__name__)
@@ -23,8 +22,14 @@ app.register_blueprint(viewer_module)
 local_queue_name = "inproc://netrobots"
 client_queue_name = "tcp://127.0.0.1:5555"
 
+#
+# Manage Application Status Inside Web Server Contexts
+#
+
 @app.before_first_request
 def setup_game_server():
+    """This code is executed exactly one time, at application startup, and it starts GameServer threads."""
+
     thread1 = WakeUpThread(0.250, local_queue_name, client_queue_name)
     thread2 = GameThread(0.125, local_queue_name, client_queue_name)
 
@@ -35,4 +40,3 @@ def setup_game_server():
     thread1.start()
 
     app.local_queue_name = local_queue_name
-
