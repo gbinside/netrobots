@@ -1,5 +1,6 @@
 from flask import Flask, render_template, flash
 from server.game_server import WakeUpThread, GameThread
+from random import randint
 
 app = Flask(__name__)
 
@@ -19,8 +20,8 @@ from app.viewer.controllers import mod_viewer as viewer_module
 app.register_blueprint(board_module)
 app.register_blueprint(viewer_module)
 
-local_queue_name = "inproc://netrobots"
-client_queue_name = "tcp://127.0.0.1:5555"
+# a unique internal ZMQ queue accepting internal commands
+local_queue_name = "inproc://netrobots_" + str(randint(1, 100000))
 
 #
 # Manage Application Status Inside Web Server Contexts
@@ -30,8 +31,8 @@ client_queue_name = "tcp://127.0.0.1:5555"
 def setup_game_server():
     """This code is executed exactly one time, at application startup, and it starts GameServer threads."""
 
-    thread1 = WakeUpThread(0.250, local_queue_name, client_queue_name)
-    thread2 = GameThread(0.125, local_queue_name, client_queue_name)
+    thread1 = WakeUpThread(0.250, local_queue_name, app.config['SERVER_SOCKET'])
+    thread2 = GameThread(0.125, local_queue_name, app.config['SERVER_SOCKET'])
 
     thread2.daemon = True
     thread2.start()
