@@ -31,8 +31,12 @@ local_queue_name = "inproc://netrobots_" + str(randint(1, 100000))
 def setup_game_server():
     """This code is executed exactly one time, at application startup, and it starts GameServer threads."""
 
+    # XXX
+    log = open('debug.log', 'wb')
+    log.write("\nStart of LOG FILE\n")
+
     thread1 = WakeUpThread(0.250, local_queue_name, app.config['SERVER_SOCKET'])
-    thread2 = GameThread(0.125, local_queue_name, app.config['SERVER_SOCKET'])
+    thread2 = GameThread(0.125, local_queue_name, app.config['SERVER_SOCKET'], log)
 
     thread2.daemon = True
     thread2.start()

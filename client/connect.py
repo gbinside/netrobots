@@ -1,6 +1,6 @@
 __author__ = 'Massimo Zaniboni'
 
-from server.netrobots_pb2 import *
+from client.netrobots_pb2 import *
 import zmq
 
 class Connect:
@@ -67,7 +67,7 @@ class Connect:
         status = RobotStatus()
         status.ParseFromString(binary_status)
 
-        self._token = status.token
+        self._robot_token = status.token
 
         return status
 
@@ -89,15 +89,16 @@ class Connect:
         """
         Send the scheduled robot commands to the server, and wait an answer, returning the new robot status.
         In case of an idle robot, it should call repeatedly this method.
-        After the returning of this method, all the robot scheduled commands are reset to Nothing.
+        Repeated wait resend the previous scan and drive commands.
+        Cannon fire command must be explicitely activated before calling wait.
 
         :return: RobotStatus
         """
 
         if self._robot_token is not None:
             c = MainCommand()
-            c.robotCommand.token = self._robot_token
             c.robotCommand.CopyFrom(self._robot_command)
+            c.robotCommand.token = self._robot_token
 
             self.get_game_server_socket().send(c.SerializeToString())
 
@@ -106,23 +107,23 @@ class Connect:
         else:
             status = None
 
-        self.reset_request()
+        self._robot_command.ClearField('cannon')
 
         return status
 
-    def drive(self, speed, heading):
+    def drive(self, speed, direction):
         """
         Schedule a change motion of the robot.
         This command is only scheduled, and it must be sent explicitely with "wait" method.
 
         :param speed: int
-        :param heading: int
+        :param direction: int
         """
 
         v = Drive()
-        v.speed = speed
-        v.heading = heading
-        self._robot_command.drive = v
+        v.speed = int(speed)
+        v.direction = int(direction)
+        self._robot_command.drive.CopyFrom(v)
 
     def scan(self, direction, semiaperture):
         """
@@ -134,9 +135,9 @@ class Connect:
         """
 
         v = Scan()
-        v.degree = semiaperture
-        v.resolution = direction
-        self._robot_command.scan = v
+        v.semiaperture = int(semiaperture) % 180
+        v.direction = int(direction) % 360
+        self._robot_command.scan.CopyFrom(v)
 
     def cannon(self, direction, distance):
         """
@@ -148,9 +149,9 @@ class Connect:
         """
 
         v = Cannon()
-        v.degree = direction
-        v.distance = distance
-        self._robot_command.cannon = v
+        v.direction = int(direction) % 360
+        v.distance = int(distance)
+        self._robot_command.cannon.CopyFrom(v)
 
     def default_creation_params(self, robot_name):
         """
@@ -158,7 +159,7 @@ class Connect:
 
         :param robot_name: string
         """
-        
+
         p = CreateRobot()
         p.name = robot_name
         p.maxHitPoints = -1
@@ -183,28 +184,30 @@ class Connect:
 
         return show_status1(s)
 
+
 def show_status1(s):
     """
 
     :param s: RobotStatus
     :return: string
     """
-        r = "\n  name = " + s.name
-        r = r + "\n  token = " + s.token
-        r = r     + "\n  globalTime = " + str(s.globalTime)
-        r = r     + "\n  hp = " + str(s.hp)
-        r = r     + "\n  heading = " + str(s.heading)
-        r = r     + "\n  speed = " + str(s.speed)
-        r = r     + "\n  x = " + str(s.x)
-        r = r     + "\n  y = " + str(s.y)
-        r = r     + "\n  dead = " + str(s.dead)
-        r = r     + "\n  winner = " + str(s.winner)
-        r = r     + "\n  wellSpecifiedRobot = " + str(s.wellSpecifiedRobot)
-        r = r     + "\n  maxSpeed = " + str(s.maxSpeed)
-        r = r     + "\n  reloading = "  + str(s.reloading)
-        r = r     + "\n  firedNewMissile = " + str(s.firedNewMissile)
+    r = "\n  name = " + s.name
+    r = r + "\n  token = " + s.token
+    r = r + "\n  globalTime = " + str(s.globalTime)
+    r = r + "\n  hp = " + str(s.hp)
+    r = r + "\n  direction = " + str(s.direction)
+    r = r + "\n  speed = " + str(s.speed)
+    r = r + "\n  x = " + str(s.x)
+    r = r + "\n  y = " + str(s.y)
+    r = r + "\n  dead = " + str(s.isDead)
+    r = r + "\n  winner = " + str(s.isWinner)
+    r = r + "\n  wellSpecifiedRobot = " + str(s.isWellSpecifiedRobot)
+    r = r + "\n  maxSpeed = " + str(s.maxSpeed)
+    r = r + "\n  reloading = " + str(s.isReloading)
+    r = r + "\n  firedNewMissile = " + str(s.firedNewMissile)
 
-        if s.HasField('scan'):
-            r = r + "\n  scan.degree = " + str(s.scan.degree) + "\n  scan.resolution = " + str(s.scan.resolution) + "\n  scan.distance = " + str(s.scan.distance)
+    if s.HasField('scan'):
+        r = r + "\n  scan.direction = " + str(s.scan.direction) + "\n  scan.semiaperture = " + str(
+            s.scan.semiaperture) + "\n  scan.distance = " + str(s.scan.distance)
 
-        return r
+    return r

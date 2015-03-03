@@ -43,8 +43,9 @@ class WakeUpThread(threading.Thread):
 class GameThread(threading.Thread):
     """Update the Game Status."""
 
-    def __init__(self, deltatime, wake_up_socket_name, client_socket_name):
+    def __init__(self, deltatime, wake_up_socket_name, client_socket_name, log):
         threading.Thread.__init__(self)
+        self._log = log
         self._deltatime = deltatime
         self._wake_up_socket_name = wake_up_socket_name
         self._client_socket_name = client_socket_name
@@ -56,8 +57,12 @@ class GameThread(threading.Thread):
         self.queued_robot_messages = None
         self.init_game()
 
+    def debug_message(self, s):
+        self._log.write(s + "\n")
+
     def init_game(self):
         self._board = Board()
+        self._board.set_log(self._log)
         self.pending_robot_command_to_process = None
 
         self.processed_robots = {}
@@ -97,7 +102,7 @@ class GameThread(threading.Thread):
         # First process queued robots.
         for token, v in self.queued_robot_messages.iteritems():
             try:
-                self.process_robot_command(v['sender_address'], v['command'], client_socket)
+                self.process_robot_command(v['command'], v['sender_address'], client_socket)
             except:
                 client_socket.send_multipart([v['sender_address'], b'', b''])
                 # in ZMQ is mandatory sending an answer
@@ -112,7 +117,7 @@ class GameThread(threading.Thread):
                 sender_address, empty, binary_command = client_socket.recv_multipart(zmq.NOBLOCK)
                 command = MainCommand()
                 command.ParseFromString(binary_command)
-                self.process_robot_command(sender_address, command, client_socket)
+                self.process_robot_command(command, sender_address, client_socket)
 
             except zmq.error.Again:
                 # there are no more messages to process in the queue
@@ -124,7 +129,7 @@ class GameThread(threading.Thread):
                     client_socket.send_multipart([sender_address, b'', b''])
                     # in ZMQ is mandatory sending an answer
 
-    def process_robot_command(self, sender_address, command, client_socket):
+    def process_robot_command(self, command, sender_address, client_socket):
         if command.HasField('createRobot'):
             self.process_create_robot_request(command.createRobot, sender_address, client_socket)
 
@@ -136,20 +141,25 @@ class GameThread(threading.Thread):
 
             if token in self.banned_robots:
                 # nothing to do, avoid to answer to these requests
-                if token in self.queued_robot_messages:
+                pass
+            elif token in self.queued_robot_messages:
                     self.banned_robots[token] = True
+            else:
+                if token in self.processed_robots:
+                    self.queued_robot_messages[token] = {'sender_address': sender_address, 'command': command }
                 else:
-                    if token in self.processed_robots:
-                        self.queued_robot_messages[token] = {'sender_address': sender_address, 'command': command }
-                    else:
-                        self.processed_robots[token] = True
-                        self.process_robot_request(sender_address, command.robotCommand, client_socket)
+                    self.processed_robots[token] = True
+                    self.process_robot_request(command.robotCommand, sender_address, client_socket)
 
-    def process_create_robot_request(self, sender_address, request, client_socket):
-        """Create a Robot. If the Robot does not respect the constraints it is returned dead,
-         and with wellSpecifiedRobot = False"""
+    def process_create_robot_request(self, request, sender_address, client_socket):
+        """
+        Create a Robot. If the Robot does not respect the constraints it is returned dead,
+        and with wellSpecifiedRobot = False
 
-        assert(isinstance(request, CreateRobot))
+        :param sender_address: string
+        :param request: CreateRobot
+        :param client_socket:
+        """
 
         extra = dict(
             max_hit_points=request.maxHitPoints,
@@ -161,17 +171,17 @@ class GameThread(threading.Thread):
             max_fire_distance=request.maxFireDistance,
             bullet_speed=request.bulletSpeed,
             bullet_damage=request.bulletDamage,
-            reloading_time=request.reloading_Time
+            reloading_time=request.reloadingTime
         )
 
-        status = self._board.create_robot(request.name, configuration=extra)
+        status = self._board.create_robot(request.name, extra)
         client_socket.send_multipart([sender_address, b'', status.SerializeToString()])
 
-    def process_delete_robot_request(self, sender_address, request, client_socket):
+    def process_delete_robot_request(self, request, sender_address, client_socket):
         self._board.remove_robot_by_token(request.token)
         client_socket.send_multipart([sender_address, b'', b''])
 
-    def process_robot_request(self, sender_address, request, client_socket):
+    def process_robot_request(self, request, sender_address, client_socket):
 
         robot = self._board.get_robot_by_token(request.token)
         if robot is None:
@@ -179,19 +189,19 @@ class GameThread(threading.Thread):
 
         assert isinstance(robot, Robot)
 
-        robot.last_command_executed_at_global_time = self._board.global_time
+        robot.last_command_executed_at_global_time = self._board.global_time()
 
         if request.HasField('scan'):
-            robot.scan(request.scan.degree, request.scan.resolution)
+            robot.scan(request.scan.direction, request.scan.semiaperture)
         else:
             robot.no_scan()
 
         if request.HasField('cannon'):
-            robot.cannon(request.cannon.degree, request.cannon.distance)
+            robot.cannon(request.cannon.direction, request.cannon.distance)
         else:
             robot.no_cannon()
 
         if request.HasField('drive'):
-            robot.drive(request.drive.degree, request.drive.speed)
+            robot.drive(request.drive.direction, request.drive.speed)
 
-        client_socket.send_multipart([sender_address, b'', robot.get_status().SerializeToString()])
+        client_socket.send_multipart([sender_address, b'', robot.get_exportable_status().SerializeToString()])

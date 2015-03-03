@@ -4,6 +4,89 @@ package netrobots;
 // protoc -I=client --python_out=client client/netrobots.proto
 // NOTE: for other languages there are other similar commands to execute.
 
+message ScanStatus {
+
+    /**
+     * The angle direction of the scan.
+     */
+    required int32 direction = 11;
+
+    /**
+     * The angle of the scan cone identifying the scanned area.
+     */
+    required int32 semiaperture = 12;
+
+    /**
+     * The distance of an object inside the scanned area.
+     */
+    required int32 distance = 13;
+}
+
+/**
+ * The status of a Robot.
+ */
+message RobotStatus {
+
+  /**
+   * The name of the robot.
+   */
+  required string name = 1;
+
+  /**
+   * A unique token identifying the robot inside the system.
+   * Automatically assigned from the system.
+   */
+  required string token = 30;
+
+  /**
+   * This status information is valid at this global simulation time.
+   */
+  required float globalTime = 21;
+
+  /**
+   * Hit Points.
+   */
+  required int32 hp=2;
+
+  /**
+   * The angle direction of the robot.
+   */
+  required int32 direction = 3;
+
+  required int32 speed = 4;
+
+  required int32 x = 5;
+
+  required int32 y = 6;
+
+  required bool isDead = 7;
+
+  required bool isWinner= 8;
+
+  /**
+   * True if the robot creation params respect the constraints.
+   */
+  required bool isWellSpecifiedRobot = 20;
+
+  required int32 maxSpeed = 9;
+
+  /**
+   * True if the robot can not fire immediately, because it is reloading the cannon.
+   */
+  required bool isReloading = 10;
+
+  /**
+   * True if in the last robot command, the robot fired a missile.
+   */
+  required bool firedNewMissile = 15;
+
+  /**
+   * This is the result of the last scan.
+   * Compiled only if there were a scan command in the last robot request.
+   */
+  optional ScanStatus scan = 14;
+}
+
 /**
  * Params used for creating a new Robot.
  * The value -1 is used for using default params.
@@ -67,18 +150,22 @@ message CreateRobot {
 }
 
 message Cannon {
-    required int32 degree = 1;
+    required int32 direction = 1;
     required int32 distance = 2;
 }
 
 message Drive {
     required int32 speed = 3;
-    required int32 degree = 4;
+    required int32 direction = 4;
 }
 
 message Scan {
-    required int32 degree = 5;
-    required int32 resolution = 6;
+    required int32 direction = 5;
+
+    /**
+     * The semi aperture in degree of the scanner.
+     */
+    required int32 semiaperture = 6;
 }
 
 /**
@@ -94,88 +181,6 @@ message RobotCommand {
   optional Cannon cannon = 8;
   optional Scan scan = 9;
   optional Drive drive = 10;
-}
-
-/**
- * The status of a Robot.
- */
-message RobotStatus {
-
-  /**
-   * The name of the robot.
-   */
-  required string name = 1;
-
-  /**
-   * A unique token identifying the robot inside the system.
-   * Automatically assigned from the system.
-   */
-  required string token = 30;
-
-  /**
-   * This status information is valid at this global simulation time.
-   */
-  required float globalTime = 21;
-
-  /**
-   * Hit Points: how many enemy are hit.
-   */
-  required int32 hp=2;
-
-  /**
-   * The angle direction of the robot.
-   */
-  required int32 heading = 3;
-
-  required int32 speed = 4;
-
-  required int32 x = 5;
-
-  required int32 y = 6;
-
-  required bool isDead = 7;
-
-  required bool isWinner= 8;
-
-  /**
-   * True if the robot creation params respect the constraints.
-   */
-  required bool isWellSpecifiedRobot = 20;
-
-  required int32 maxSpeed = 9;
-
-  /**
-   * True if the robot can not fire immediately, because it is reloading the cannon.
-   */
-  required bool isReloading = 10;
-
-  /**
-   * True if in the last robot command, the robot fired a missile.
-   */
-  required bool firedNewMissile = 15;
-
-  message Scan {
-    /**
-     * The angle direction of the scan.
-     */
-    required int32 degree = 11;
-
-    /**
-     * The angle of the scan cone identifying the scanned area.
-     */
-    required int32 resolution = 12;
-
-    /**
-     * The distance of an object inside the scanned area.
-     */
-    required int32 distance = 13;
-  }
-
-  /**
-   * This is the result of the last scan.
-   * Compiled only if there were a scan command in the last robot request.
-   */
-  optional Scan scan = 14;
 }
 
 message DeleteRobot {

@@ -8,7 +8,7 @@ from client.netrobots_pb2 import *
 
 class Board:
     def __init__(self, size=(1000, 1000)):
-        self._global_time = 0
+        self._global_time = 0.0
         self._size = size
         self.robots = {}
         self.robots_by_token = {}
@@ -18,22 +18,34 @@ class Board:
         self._wall_hit_damage = 2
         self._join_status = None
         self.kdr = {}
+        self._log = None
 
     def global_time(self):
         return self._global_time
 
+    def set_log(self, v):
+        self._log = v
+
+    def debug_message(self, s):
+        self._log.write(s + "\n")
 
     def create_robot(self, original_name, configurations):
-        """Create a new robot with some configurations. Return an inactive status in case of problems. """
+        """
+        Create a new robot with some configurations, and add to the current board.
+        Return an inactive status in case of problems.
 
+        :return: RobotStatus
+        """
+
+        # Use a unique name inside the system
         name = original_name
-        c = 2
+        c = 1
         while name in self.robots:
-            name = original_name + "_" + c
             c = c + 1
-        # @ensure name is a unique name inside the system
+            name = original_name + "_" + str(c)
 
         _new_robot = Robot(name, len(self.robots), configuration=configurations, is_testing=False)
+
         if _new_robot.calc_value() > 327:
             _new_robot._dead = True
             _new_robot._well_specified_robot = False
@@ -41,20 +53,24 @@ class Board:
         else:
             self.add_robot(_new_robot)
 
-        return _new_robot.get_status()
+        return _new_robot.get_exportable_status()
 
 
     def add_robot(self, robot):
         """Add the robot inside the board."""
         if robot.get_name() not in self.robots:
+            robot.set_board(self)
+            robot.set_log(self._log)
             self.robots[robot.get_name()] = robot
             self.robots_by_token[robot.get_token()] = robot
             robot.last_command_executed_at_global_time = self.global_time()
             return True
-        return False
+        else:
+            return False
 
     def remove_robot(self, robot):
         if robot.get_name() in self.robots:
+            robot.set_board(None)
             del self.robots[robot.get_name()]
             del self.robots_by_token[robot.get_token()]
             return True
@@ -283,14 +299,14 @@ class Robot:
     def __init__(self, name, count_of_other, configuration=None, is_testing=False):
 
         self._token = hashlib.md5(name + time.strftime('%c')).hexdigest()
+        self._log = None
 
+        self._board = None
         self.scan_degree = None
         self.scan_resolution = None
         self.scan_distance = None
         self.fired_new_missile = False
-
-        self.last_command_executed_at_global_time = -1
-
+        self.last_command_executed_at_global_time = 0.0
         self._name = name
         self._max_hit_points = 100
         self._hit_points = self._max_hit_points
@@ -331,6 +347,15 @@ class Robot:
     def get_token(self):
         return self._token
 
+    def set_board(self, v):
+        self._board = v
+
+    def set_log(self, v):
+        self._log = v
+
+    def debug_message(self, s):
+        self._log.write(s + "\n")
+
     def calc_value(self):
         return sum([
             self._max_hit_points,
@@ -346,6 +371,10 @@ class Robot:
         ])
 
     def get_data(self):
+        """
+        :return:a dictionary with the status of the robot in a format recognized from the Board viewer tool,
+        and from old Rest based API.
+        """
         return dict(
             name=self._name,
             max_hit_points=self._max_hit_points,
@@ -364,34 +393,61 @@ class Robot:
         )
 
     def get_status(self):
-        r = RobotStatus()
+        return dict(
+            name=self._name,
+            hp=self._hit_points,
+            heading=self._heading,
+            speed=self._current_speed,
+            x=self._x,
+            y=self._y,
+            dead=self._dead,
+            winner=self._winner,
+            max_speed=self._max_speed,
+            reloading=self._reloading
+        )
 
+    def get_exportable_status(self):
+        """
+        Convert the internal robot status to a status that can be view from external robot controllers.
+        :return: RobotStatus
+        """
+
+        self.debug_message("get_exportable_status  START")
+
+        r = RobotStatus()
         r.name = self._name
         r.token = self.get_token()
         r.globalTime = self.last_command_executed_at_global_time
-        r.hp = self._hit_points
-        r.heading = self._heading
-        r.speed = self._current_speed
-        r.x = self._x
-        r.y = self._y
-        r.dead = self._dead
-        r.wellSpecifiedRobot = self._well_specified_robot
-        r.winner = self._winner
-        r.max_speed = self._max_speed
-        r.reloading = self._reloading
+        r.hp = int(self._hit_points)
+        r.direction = int(self._heading)
+        r.speed = int(self._current_speed)
+        r.x = int(self._x)
+        r.y = int(self._y)
+        r.isDead = self._dead
+        r.isWellSpecifiedRobot = self._well_specified_robot
+        r.isWinner = self._winner
+        r.maxSpeed = int(self._max_speed)
+        r.isReloading = self._reloading
         r.firedNewMissile = self.fired_new_missile
 
         if self.scan_degree is not None:
-            r.scan.degree = self.scan_degree
-            r.scan.resolution = self.scan_resolution
-            r.scan.distance = self.scan_distance
+            self.debug_message("get_exportable_status  22")
 
+            p = ScanStatus()
+            p.direction = int(self.scan_degree)
+            p.semiaperture = int(self.scan_resolution)
+            p.distance = int(self.scan_distance)
+            r.scan.CopyFrom(p)
+            self.debug_message("get_exportable_status  50")
+
+
+        self.debug_message("get_exportable_status  END")
         return r
 
     def drive(self, degree, speed):
         if self.is_dead():
             return False
-        degree, speed = int(float(degree)) % 360, int(speed)
+        degree, speed = int(degree) % 360, int(speed)
         if degree != self._heading and self._current_speed > self._max_sterling_speed:
             # overheat
             self.block()
@@ -403,7 +459,7 @@ class Robot:
     def scan(self, degree, resolution):
         if self.is_dead():
             return False
-        degree, resolution = int(degree) % 360, max(1, int(resolution))
+        degree, resolution = int(degree) % 360, max(1, int(resolution) % 180)
         distance = self._board.radar(self, (self._x, self._y), self._max_scan_distance, degree, resolution)
 
         self.scan_degree = degree
