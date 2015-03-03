@@ -139,7 +139,7 @@ class Connect:
         v.distance = distance
         self._robot_command.cannon = v
 
-    def default_robot_params(self, robot_name):
+    def default_creation_params(self, robot_name):
         """
         To use during Robot creation, for setting params to default settings.
         """
