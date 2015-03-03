@@ -5,7 +5,6 @@ import zmq.error
 from game_model import *
 from netrobots_pb2 import *
 import json
-from client.connect  import show_status1
 
 COMMAND_WAKE_UP = b"tick"
 COMMAND_RESET_GAME = b"reset-game"
@@ -28,7 +27,7 @@ class WakeUpThread(threading.Thread):
         wake_up_socket = zmq.Context.instance().socket(zmq.REQ)
         wake_up_socket.connect(self._wake_up_socket_name)
 
-        client_socket = zmq.Context.instance().socket(zmq.REQ)
+        client_socket = zmq.Context.instance().socket(zmq.ROUTER)
         client_socket.connect(self._client_socket_name)
 
         while 1:
@@ -51,20 +50,26 @@ class GameThread(threading.Thread):
         self._client_socket_name = client_socket_name
         self._board = Board()
         self.pending_robot_command_to_process = None
-        self.processed_robots = {}
+
+        self.processed_robots = None
+        self.banned_robots = None
+        self.queued_robot_messages = None
         self.init_game()
 
     def init_game(self):
         self._board = Board()
         self.pending_robot_command_to_process = None
+
         self.processed_robots = {}
+        self.banned_robots = {}
+        self.queued_robot_messages = {}
 
     def run(self):
 
         wake_up_socket =  zmq.Context.instance().socket(zmq.REP)
         wake_up_socket.bind(self._wake_up_socket_name)
 
-        client_socket = zmq.Context.instance().socket(zmq.REP)
+        client_socket = zmq.Context.instance().socket(zmq.ROUTER)
 
         client_socket.bind(self._client_socket_name)
 
@@ -83,59 +88,64 @@ class GameThread(threading.Thread):
                 assert(False)
 
     def process_robots_requests(self, client_socket):
-        # Initialize status variables, to use during processing of requests
-        self.processed_robots = {}
 
-        # Update the board
         self._board.tick(self._deltatime)
 
-        # Update the robots according the requests from clients.
+        self.processed_robots = self.queued_robot_messages
+        # for sure a queued robot, can not send process commands in this turn
+
+        # First process queued robots.
+        for token, v in self.queued_robot_messages.iteritems():
+            try:
+                self.process_robot_command(v['sender_address'], v['command'], client_socket)
+            except:
+                client_socket.send_multipart([v['sender_address'], b'', b''])
+                # in ZMQ is mandatory sending an answer
+
+        self.queued_robot_messages = {}
+
+        # Update the robots according the new requests from clients.
         again = True
         while again:
-            binary_command = None
+            sender_address = None
             try:
-                if self.pending_robot_command_to_process is not None:
-                    robot_command = self.pending_robot_command_to_process
-                    self.pending_robot_command_to_process = None
-                    self.process_robot_request(robot_command)
-                else:
-                    binary_command = client_socket.recv(zmq.NOBLOCK)
-                    command = MainCommand()
-                    command.ParseFromString(binary_command)
-
-                    if command.HasField('createRobot'):
-                        self.process_create_robot_request(command.createRobot, client_socket)
-
-                    elif command.HasField('deleteRobot'):
-                        self.process_delete_robot_request(command.deleteRobot)
-
-                    elif command.HasField('robotCommand'):
-                        can_be_processed = self.process_robot_request(command.robotCommand, client_socket)
-                        if can_be_processed:
-                            again = True
-                            self.pending_robot_command_to_process = None
-                        else:
-                            again = False
-                            self.pending_robot_command_to_process = command.robotCommand
-                            # This robot can not be processed immediately, because this is an event related
-                            # to the next simulation tick. So pause, waiting all other requests are sent to this server,
-                            # and then resume starting from this robot.
-                            # NOTE: this algo work because ZMQ assure that messages are retrieved from queues using a
-                            # round-robin algorithm, so before processing the messages of the same robot/client,
-                            # all the messages of other robots are processed.
+                sender_address, empty, binary_command = client_socket.recv_multipart(zmq.NOBLOCK)
+                command = MainCommand()
+                command.ParseFromString(binary_command)
+                self.process_robot_command(sender_address, command, client_socket)
 
             except zmq.error.Again:
                 # there are no more messages to process in the queue
-                self.pending_robot_command_to_process = None
                 again = False
 
             except:
                 # there is an error processing the command for this client.
-                if binary_command is not None:
-                    client_socket.send(b"")
+                if sender_address is not None:
+                    client_socket.send_multipart([sender_address, b'', b''])
                     # in ZMQ is mandatory sending an answer
 
-    def process_create_robot_request(self, request, client_socket):
+    def process_robot_command(self, sender_address, command, client_socket):
+        if command.HasField('createRobot'):
+            self.process_create_robot_request(command.createRobot, sender_address, client_socket)
+
+        elif command.HasField('deleteRobot'):
+            self.process_delete_robot_request(command.deleteRobot, sender_address, client_socket)
+
+        elif command.HasField('robotCommand'):
+            token = command.robotCommand.token
+
+            if token in self.banned_robots:
+                # nothing to do, avoid to answer to these requests
+                if token in self.queued_robot_messages:
+                    self.banned_robots[token] = True
+                else:
+                    if token in self.processed_robots:
+                        self.queued_robot_messages[token] = {'sender_address': sender_address, 'command': command }
+                    else:
+                        self.processed_robots[token] = True
+                        self.process_robot_request(sender_address, command.robotCommand, client_socket)
+
+    def process_create_robot_request(self, sender_address, request, client_socket):
         """Create a Robot. If the Robot does not respect the constraints it is returned dead,
          and with wellSpecifiedRobot = False"""
 
@@ -155,29 +165,19 @@ class GameThread(threading.Thread):
         )
 
         status = self._board.create_robot(request.name, configuration=extra)
+        client_socket.send_multipart([sender_address, b'', status.SerializeToString()])
 
-        client_socket.send(status.SerializeToString())
-
-    def process_delete_robot_request(self, request):
+    def process_delete_robot_request(self, sender_address, request, client_socket):
         self._board.remove_robot_by_token(request.token)
+        client_socket.send_multipart([sender_address, b'', b''])
 
-    def process_robot_request(self, request, client_socket):
-        """Process only new robots. Otherwise return False.
-        Use implicitely also the status initializated from process_robots_requests."""
-
-        if request.token in self.processed_robots:
-            return False
-        else:
-            self.processed_robots[request.token]
+    def process_robot_request(self, sender_address, request, client_socket):
 
         robot = self._board.get_robot_by_token(request.token)
         if robot is None:
             raise NameError('Unknown Robot')
 
         assert isinstance(robot, Robot)
-
-        if self._board.global_time < robot.last_command_executed_at_global_time:
-            raise NameError('Client is sending too much requests')
 
         robot.last_command_executed_at_global_time = self._board.global_time
 
@@ -194,6 +194,4 @@ class GameThread(threading.Thread):
         if request.HasField('drive'):
             robot.drive(request.drive.degree, request.drive.speed)
 
-        client_socket.send(robot.get_status().SerializeToString())
-
-        return True
+        client_socket.send_multipart([sender_address, b'', robot.get_status().SerializeToString()])

@@ -85,9 +85,7 @@ class Connect:
         return status
 
     def get_robot_status(self):
-        """Ask immediately the robot status."""
-
-        self.reset_request()
+        """Ask immediately the robot status, sending also scheduled commands."""
         return self.send_robot_command()
 
     def drive(self, speed, heading):
