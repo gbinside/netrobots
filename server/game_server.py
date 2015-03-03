@@ -3,7 +3,7 @@ import time
 import zmq
 import zmq.error
 from game_model import *
-from netrobots_pb2 import *
+from client.netrobots_pb2 import *
 import json
 
 COMMAND_WAKE_UP = b"tick"

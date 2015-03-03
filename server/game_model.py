@@ -4,8 +4,7 @@ import hashlib
 from math import cos, sin, radians, atan2, degrees, pi
 from random import randint
 import time
-from netrobots_pb2 import *
-
+from client.netrobots_pb2 import *
 
 class Board:
     def __init__(self, size=(1000, 1000)):
@@ -417,7 +416,6 @@ class Robot:
         self.scan_degree = None
         self.scan_resolution = None
         self.scan_distance = None
-
         return True
 
     def cannon(self, degree, distance):

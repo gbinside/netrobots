@@ -3,7 +3,7 @@ package netrobots;
 // NOTE: the ""= 1"" part are consecutive TAGS, used only in case of protocol versioning.
 
 // NOTE: for generating Python code:
-// protoc -I=server --python_out=server server/netrobots.proto
+// protoc -I=client --python_out=client client/netrobots.proto
 
 
 message CreateRobot {

@@ -9,7 +9,7 @@ from math import atan2, degrees
 from random import randint
 import sys
 import client.connect as connect
-from server.netrobots_pb2 import *
+from client.netrobots_pb2 import *
 import json
 
 
