@@ -13,7 +13,7 @@ from google.protobuf import descriptor_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='netrobots.proto',
   package='netrobots',
-  serialized_pb='\n\x0fnetrobots.proto\x12\tnetrobots\"\xfe\x01\n\x0b\x43reateRobot\x12\x0c\n\x04name\x18\x14 \x02(\t\x12\x14\n\x0cmaxHitPoints\x18\n \x02(\x11\x12\x10\n\x08maxSpeed\x18\x0b \x02(\x11\x12\x14\n\x0c\x61\x63\x63\x65leration\x18\x0c \x02(\x11\x12\x15\n\rdecelleration\x18\r \x02(\x11\x12\x18\n\x10maxSterlingSpeed\x18\x0e \x02(\x11\x12\x17\n\x0fmaxScanDistance\x18\x0f \x02(\x11\x12\x17\n\x0fmaxFireDistance\x18\x10 \x02(\x11\x12\x13\n\x0b\x62ulletSpeed\x18\x11 \x02(\x11\x12\x14\n\x0c\x62ulletDamage\x18\x12 \x02(\x11\x12\x15\n\rreloadingTime\x18\x13 \x02(\x11\"*\n\x06\x43\x61nnon\x12\x0e\n\x06\x64\x65gree\x18\x01 \x02(\x05\x12\x10\n\x08\x64istance\x18\x02 \x02(\x05\"&\n\x05\x44rive\x12\r\n\x05speed\x18\x03 \x02(\x05\x12\x0e\n\x06\x64\x65gree\x18\x04 \x02(\x05\"*\n\x04Scan\x12\x0e\n\x06\x64\x65gree\x18\x05 \x02(\x05\x12\x12\n\nresolution\x18\x06 \x02(\x05\"\x80\x01\n\x0cRobotCommand\x12\r\n\x05token\x18\x0b \x02(\t\x12!\n\x06\x63\x61nnon\x18\x08 \x01(\x0b\x32\x11.netrobots.Cannon\x12\x1d\n\x04scan\x18\t \x01(\x0b\x32\x0f.netrobots.Scan\x12\x1f\n\x05\x64rive\x18\n \x01(\x0b\x32\x10.netrobots.Drive\"\xe1\x02\n\x0bRobotStatus\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\r\n\x05token\x18\x1e \x02(\t\x12\x12\n\nglobalTime\x18\x15 \x02(\x02\x12\n\n\x02hp\x18\x02 \x02(\x05\x12\x0f\n\x07heading\x18\x03 \x02(\x05\x12\r\n\x05speed\x18\x04 \x02(\x05\x12\t\n\x01x\x18\x05 \x02(\x05\x12\t\n\x01y\x18\x06 \x02(\x05\x12\x0c\n\x04\x64\x65\x61\x64\x18\x07 \x02(\x08\x12\x0e\n\x06winner\x18\x08 \x02(\x08\x12\x1a\n\x12wellSpecifiedRobot\x18\x14 \x02(\x08\x12\x10\n\x08maxSpeed\x18\t \x02(\x05\x12\x11\n\treloading\x18\n \x02(\x08\x12\x17\n\x0f\x66iredNewMissile\x18\x0f \x02(\x08\x12)\n\x04scan\x18\x0e \x01(\x0b\x32\x1b.netrobots.RobotStatus.Scan\x1a<\n\x04Scan\x12\x0e\n\x06\x64\x65gree\x18\x0b \x02(\x05\x12\x12\n\nresolution\x18\x0c \x02(\x05\x12\x10\n\x08\x64istance\x18\r \x02(\x05\"\x1c\n\x0b\x44\x65leteRobot\x12\r\n\x05token\x18\x01 \x02(\t\"\x96\x01\n\x0bMainCommand\x12+\n\x0b\x63reateRobot\x18\x01 \x01(\x0b\x32\x16.netrobots.CreateRobot\x12-\n\x0crobotCommand\x18\x02 \x01(\x0b\x32\x17.netrobots.RobotCommand\x12+\n\x0b\x64\x65leteRobot\x18\x03 \x01(\x0b\x32\x16.netrobots.DeleteRobot')
+  serialized_pb='\n\x0fnetrobots.proto\x12\tnetrobots\"\xfe\x01\n\x0b\x43reateRobot\x12\x0c\n\x04name\x18\x14 \x02(\t\x12\x14\n\x0cmaxHitPoints\x18\n \x02(\x11\x12\x10\n\x08maxSpeed\x18\x0b \x02(\x11\x12\x14\n\x0c\x61\x63\x63\x65leration\x18\x0c \x02(\x11\x12\x15\n\rdecelleration\x18\r \x02(\x11\x12\x18\n\x10maxSterlingSpeed\x18\x0e \x02(\x11\x12\x17\n\x0fmaxScanDistance\x18\x0f \x02(\x11\x12\x17\n\x0fmaxFireDistance\x18\x10 \x02(\x11\x12\x13\n\x0b\x62ulletSpeed\x18\x11 \x02(\x11\x12\x14\n\x0c\x62ulletDamage\x18\x12 \x02(\x11\x12\x15\n\rreloadingTime\x18\x13 \x02(\x11\"*\n\x06\x43\x61nnon\x12\x0e\n\x06\x64\x65gree\x18\x01 \x02(\x05\x12\x10\n\x08\x64istance\x18\x02 \x02(\x05\"&\n\x05\x44rive\x12\r\n\x05speed\x18\x03 \x02(\x05\x12\x0e\n\x06\x64\x65gree\x18\x04 \x02(\x05\"*\n\x04Scan\x12\x0e\n\x06\x64\x65gree\x18\x05 \x02(\x05\x12\x12\n\nresolution\x18\x06 \x02(\x05\"\x80\x01\n\x0cRobotCommand\x12\r\n\x05token\x18\x0b \x02(\t\x12!\n\x06\x63\x61nnon\x18\x08 \x01(\x0b\x32\x11.netrobots.Cannon\x12\x1d\n\x04scan\x18\t \x01(\x0b\x32\x0f.netrobots.Scan\x12\x1f\n\x05\x64rive\x18\n \x01(\x0b\x32\x10.netrobots.Drive\"\xe9\x02\n\x0bRobotStatus\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\r\n\x05token\x18\x1e \x02(\t\x12\x12\n\nglobalTime\x18\x15 \x02(\x02\x12\n\n\x02hp\x18\x02 \x02(\x05\x12\x0f\n\x07heading\x18\x03 \x02(\x05\x12\r\n\x05speed\x18\x04 \x02(\x05\x12\t\n\x01x\x18\x05 \x02(\x05\x12\t\n\x01y\x18\x06 \x02(\x05\x12\x0e\n\x06isDead\x18\x07 \x02(\x08\x12\x10\n\x08isWinner\x18\x08 \x02(\x08\x12\x1c\n\x14isWellSpecifiedRobot\x18\x14 \x02(\x08\x12\x10\n\x08maxSpeed\x18\t \x02(\x05\x12\x13\n\x0bisReloading\x18\n \x02(\x08\x12\x17\n\x0f\x66iredNewMissile\x18\x0f \x02(\x08\x12)\n\x04scan\x18\x0e \x01(\x0b\x32\x1b.netrobots.RobotStatus.Scan\x1a<\n\x04Scan\x12\x0e\n\x06\x64\x65gree\x18\x0b \x02(\x05\x12\x12\n\nresolution\x18\x0c \x02(\x05\x12\x10\n\x08\x64istance\x18\r \x02(\x05\"\x1c\n\x0b\x44\x65leteRobot\x12\r\n\x05token\x18\x01 \x02(\t\"\x96\x01\n\x0bMainCommand\x12+\n\x0b\x63reateRobot\x18\x01 \x01(\x0b\x32\x16.netrobots.CreateRobot\x12-\n\x0crobotCommand\x18\x02 \x01(\x0b\x32\x17.netrobots.RobotCommand\x12+\n\x0b\x64\x65leteRobot\x18\x03 \x01(\x0b\x32\x16.netrobots.DeleteRobot')
 
 
 
@@ -307,8 +307,8 @@ _ROBOTSTATUS_SCAN = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=840,
-  serialized_end=900,
+  serialized_start=848,
+  serialized_end=908,
 )
 
 _ROBOTSTATUS = _descriptor.Descriptor(
@@ -375,21 +375,21 @@ _ROBOTSTATUS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='dead', full_name='netrobots.RobotStatus.dead', index=8,
+      name='isDead', full_name='netrobots.RobotStatus.isDead', index=8,
       number=7, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='winner', full_name='netrobots.RobotStatus.winner', index=9,
+      name='isWinner', full_name='netrobots.RobotStatus.isWinner', index=9,
       number=8, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='wellSpecifiedRobot', full_name='netrobots.RobotStatus.wellSpecifiedRobot', index=10,
+      name='isWellSpecifiedRobot', full_name='netrobots.RobotStatus.isWellSpecifiedRobot', index=10,
       number=20, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -403,7 +403,7 @@ _ROBOTSTATUS = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='reloading', full_name='netrobots.RobotStatus.reloading', index=12,
+      name='isReloading', full_name='netrobots.RobotStatus.isReloading', index=12,
       number=10, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -433,7 +433,7 @@ _ROBOTSTATUS = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=547,
-  serialized_end=900,
+  serialized_end=908,
 )
 
 
@@ -460,8 +460,8 @@ _DELETEROBOT = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=902,
-  serialized_end=930,
+  serialized_start=910,
+  serialized_end=938,
 )
 
 
@@ -502,8 +502,8 @@ _MAINCOMMAND = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=933,
-  serialized_end=1083,
+  serialized_start=941,
+  serialized_end=1091,
 )
 
 _ROBOTCOMMAND.fields_by_name['cannon'].message_type = _CANNON

@@ -6,6 +6,7 @@ package netrobots;
 
 /**
  * Params used for creating a new Robot.
+ * The value -1 is used for using default params.
  */
 message CreateRobot {
 
@@ -80,8 +81,14 @@ message Scan {
     required int32 resolution = 6;
 }
 
+/**
+ * Send a Command to a Robot with optional parts.
+ */
 message RobotCommand {
 
+  /**
+   * The unique identifier of the robot.
+   */
   required string token = 11;
 
   optional Cannon cannon = 8;
@@ -89,6 +96,9 @@ message RobotCommand {
   optional Drive drive = 10;
 }
 
+/**
+ * The status of a Robot.
+ */
 message RobotStatus {
 
   /**
@@ -112,29 +122,32 @@ message RobotStatus {
    */
   required int32 hp=2;
 
+  /**
+   * The angle direction of the robot.
+   */
   required int32 heading = 3;
 
   required int32 speed = 4;
 
   required int32 x = 5;
 
-  required int32 y= 6;
+  required int32 y = 6;
 
-  required bool dead = 7;
+  required bool isDead = 7;
 
-  required bool winner= 8;
+  required bool isWinner= 8;
 
   /**
    * True if the robot creation params respect the constraints.
    */
-  required bool wellSpecifiedRobot = 20;
+  required bool isWellSpecifiedRobot = 20;
 
   required int32 maxSpeed = 9;
 
   /**
    * True if the robot can not fire immediately, because it is reloading the cannon.
    */
-  required bool reloading = 10;
+  required bool isReloading = 10;
 
   /**
    * True if in the last robot command, the robot fired a missile.
@@ -142,8 +155,19 @@ message RobotStatus {
   required bool firedNewMissile = 15;
 
   message Scan {
+    /**
+     * The angle direction of the scan.
+     */
     required int32 degree = 11;
+
+    /**
+     * The angle of the scan cone identifying the scanned area.
+     */
     required int32 resolution = 12;
+
+    /**
+     * The distance of an object inside the scanned area.
+     */
     required int32 distance = 13;
   }
 
@@ -160,7 +184,6 @@ message DeleteRobot {
 
 /**
  * The main command to send to the server.
- * The server will execute all the specified parts.
  */
 message MainCommand {
   optional CreateRobot createRobot = 1;
