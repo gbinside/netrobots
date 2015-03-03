@@ -4,16 +4,27 @@ from server.netrobots_pb2 import *
 import zmq
 
 class Connect:
-    """Create, and command a Robot on a GameServer.
+    """Control Robot on a NetRobots GameServer.
 
     A robot can execute in one simulation pass these contemporary commands:
     - one scan command
     - one cannon fire command
     - one move command
-    - one status command
 
     Each of these commands use a different device, so they can be used contemporary.
 
+    All these commands are optionals.
+
+    The API follow this philosophy:
+    - scan, cannon, move commands are specified, but not sent immediately,
+      because sending a command is a turn of the game, and it should done when all params are completed
+    - the "wait" command send the scheduled commands, and wait for an answer from the server,
+      and return the new board status.
+    - if a robot has nothing to do, it must call repeatedly "wait", analyzing the status, this because
+      the netrobots server expect that all robots send something,
+      and because a robot should monitor the status
+    - if a robot is too slow to sending a command, it loose a turn, the server will process
+      only the commands of other robots, and the robot will continue doing the planned movements of previous commands
     """
 
     def __init__(self, game_server_address):
@@ -28,13 +39,18 @@ class Connect:
         self.reset_request()
 
     def reset_request(self):
+        """
+        Schedule a do-nothing.
+        """
         self._robot_command = RobotCommand()
 
     def get_game_server_socket(self):
         return self._game_server_socket
 
     def create_robot(self, creation_params):
-        """Create immediately a robot, returning its status."""
+        """
+        Create immediately a robot, returning its status.
+        """
 
         self._name = creation_params.name
 
@@ -54,7 +70,9 @@ class Connect:
         return status
 
     def delete_robot(self):
-        """Delete immediately a Robot on the server."""
+        """
+        Delete immediately a Robot on the server.
+        """
 
         if self._robot_token is not None:
             c = MainCommand()
@@ -65,8 +83,12 @@ class Connect:
 
         self.reset_request()
 
-    def send_robot_command(self):
-        """Send the scheduled robot commands to the server, and wait an answer with the new robot status."""
+    def wait(self):
+        """
+        Send the scheduled robot commands to the server, and wait an answer, returning the new robot status.
+        In case of an idle robot, it should call repeatedly this method.
+        After the returning of this method, all the robot scheduled commands are reset to Nothing.
+        """
 
         if self._robot_token is not None:
             c = MainCommand()
@@ -84,13 +106,11 @@ class Connect:
 
         return status
 
-    def get_robot_status(self):
-        """Ask immediately the robot status, sending also scheduled commands."""
-        return self.send_robot_command()
-
     def drive(self, speed, heading):
-        """Schedule a change motion of the robot.
-        This command is only scheduled, and it must be sent explicitely with send_robot_command."""
+        """
+        Schedule a change motion of the robot.
+        This command is only scheduled, and it must be sent explicitely with "wait" method.
+        """
 
         v = Drive()
         v.speed = speed
@@ -98,8 +118,10 @@ class Connect:
         self._robot_command.drive = v
 
     def scan(self, direction, semiaperture):
-        """Schedule a scan.
-        This command is only scheduled, and it must be sent explicitely with send_robot_command."""
+        """
+        Schedule a scan.
+        This command is only scheduled, and it must be sent explicitely with "wait" method
+        """
 
         v = Scan()
         v.degree = semiaperture
@@ -107,18 +129,23 @@ class Connect:
         self._robot_command.scan = v
 
     def cannon(self, direction, distance):
-        """Schedule a missile fire.
-        This command is only scheduled, and it must be sent explicitely with send_robot_command."""
+        """
+        Schedule a missile fire.
+        This command is only scheduled, and it must be sent explicitely with "wait" method.
+        """
 
         v = Cannon()
         v.degree = direction
         v.distance = distance
         self._robot_command.cannon = v
 
-    def default_robot_params(self, name):
+    def default_robot_params(self, robot_name):
+        """
+        To use during Robot creation, for setting params to default settings.
+        """
         
         p = CreateRobot()
-        p.name = name
+        p.name = robot_name
         p.maxHitPoints = -1
         p.maxSpeed = -1
         p.acceleration = -1
@@ -133,9 +160,18 @@ class Connect:
         return p
 
     def show_status(self, s):
+        """
+        Display the RobotStatus.
+        """
+
         return show_status1(s)
 
 def show_status1(s):
+    """
+
+    :param s: RobotStatus
+    :return: string
+    """
         r = "\n  name = " + s.name
         r = r + "\n  token = " + s.token
         r = r     + "\n  globalTime = " + str(s.globalTime)
