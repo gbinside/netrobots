@@ -1,0 +1,23 @@
+2015-03-03
+
+The server now uses for communicating with clients:
+* ZeroMQ library, instead of HTTP protocol (clients can be processed in a more fair and controllable way, respect a generic HTTP server)
+* ProtoBuf for data conversions, instead of REST (data format is documented, and it is interchangeable between different programming languages, using automatic binding generation)
+* REST API is mantained only for the display of the board
+
+client/netrobots.proto contains a description of the accepted format.
+
+client/connect.py is a class for controlling robots. The directory example contains example usages.
+
+The server answer contains a reference to the exact "global-time" of the board simulation ticket.
+
+A Robot reacts to 3 contemporary/optional actions:
+* scan
+* fire
+* drive
+
+The PHP API can send the 3 actions in the same request without needing separate threads.
+
+The server calculate the new board, applying all the changes of robots contemporary. The only constraint it is that the clients send the command within the simulation time-frame.
+
+The server block clients sending too much requests without waiting a response from it. The connect.py API behave always in the correct way.

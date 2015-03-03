@@ -1,5 +1,5 @@
-from app.robot.model import Robot
-from app.board.model import Board
+from server.game_model import Robot
+from server.game_model import Board
 import unittest
 import app
 

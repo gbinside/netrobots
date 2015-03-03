@@ -1,12 +1,11 @@
 from flask import Flask, render_template, flash
-from board.model import Board, BoardThread
+from server.game_server import WakeUpThread, GameThread
+from random import randint
 
-# Define the WSGI application object
 app = Flask(__name__)
 
 # Configurations
 app.config.from_object('config')
-
 
 # Sample HTTP error handling
 @app.errorhandler(404)
@@ -17,13 +16,32 @@ def not_found(error):
 # Import a module / component using its blueprint handler variable (mod_board)
 from app.board.controllers import mod_board as board_module
 from app.viewer.controllers import mod_viewer as viewer_module
-from app.robot.controllers import mod_robot as robot_module
 
 app.register_blueprint(board_module)
 app.register_blueprint(viewer_module)
-app.register_blueprint(robot_module)
 
-app.game_board = Board()
-app.game_board_th = BoardThread(app.game_board.tick, 0.125, 0.250)
-app.game_board_th.daemon = True
-app.game_board_th.start()
+# a unique internal ZMQ queue accepting internal commands
+local_queue_name = "inproc://netrobots_" + str(randint(1, 100000))
+
+#
+# Manage Application Status Inside Web Server Contexts
+#
+
+@app.before_first_request
+def setup_game_server():
+    """This code is executed exactly one time, at application startup, and it starts GameServer threads."""
+
+    # XXX
+    log = open('debug.log', 'wb')
+    log.write("\nStart of LOG FILE\n")
+
+    thread1 = WakeUpThread(0.250, local_queue_name, app.config['SERVER_SOCKET'])
+    thread2 = GameThread(0.125, local_queue_name, app.config['SERVER_SOCKET'], log)
+
+    thread2.daemon = True
+    thread2.start()
+
+    thread1.daemon = True
+    thread1.start()
+
+    app.local_queue_name = local_queue_name

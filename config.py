@@ -23,3 +23,6 @@ CSRF_SESSION_KEY = "p4ssw0rd"
 SECRET_KEY = "p4ssw0rd"
 
 SITENAME = "Netrobots API"
+
+# The address of the ZMQ socket to use for sending commands to robots.
+SERVER_SOCKET = "tcp://0.0.0.0:5555"
