@@ -5,6 +5,8 @@ An experimental fork of [https://github.com/gbinside/netrobots]
 
 Liberamente basato su P-ROBOTS [http://corewar.co.uk/probots/p-robo4.txt]
 
+NOTE: Tests are not yet converted.
+
 Getting Started
 ===============
 
@@ -45,16 +47,14 @@ Robots can be written using any programming language, because they communicate w
 API
 ---
 
-See the file
-
-  server/netrobots.proto
-
-for a description of available messages.
-
-See the example directory, for examples of API usage.
+Study:
+* "client/netrobots.proto" for a description of the RobotStatus
+* "client/connect.py" for the API class
+* "example/python" for some example of Robot
 
 WEBSERVER
 =========
+
 Il webserver è scritto in Flask e sviluppato in TDD; le post sono codificate come normali POST, quindi ad esempio,
  `speed=100&degree=0` , ma le risposte sono in json.
 
@@ -91,7 +91,6 @@ NOTE TECNICHE
 =============
 
 La versione committata gira con un rapporto temporale di x2
-
 
 TODO
 =====

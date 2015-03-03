@@ -40,7 +40,6 @@ def goto(robot, x, y):
     return not data.isDead
 
 def main(argv):
-    # create robot
 
     robot = connect.Connect(BASE)
     status = robot.create_robot(robot.default_creation_params("Rabbit"))
