@@ -22,20 +22,15 @@ def main():
     teta = 0
     resolution = 10
     while not data.isDead:
-        print "\n1\n"
         robot.scan(teta, resolution)
         data = robot.wait()
-        print "\n2\n"
         d = data.scan.distance
-        print "\n3\n"
 
-        print "\nscan-distance = " + str(d)
         if d > 40:  # maximum damage radius
             while data.isReloading:
                 data = robot.wait()
             robot.cannon(teta, d)
             data = robot.wait()
-            print "\nFired: " + robot.show_status(data) + "\n"
 
         else:
             teta += resolution * 2

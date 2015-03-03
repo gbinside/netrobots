@@ -44,7 +44,6 @@ def main(argv):
 
     robot = connect.Connect(BASE)
     status = robot.create_robot(robot.default_creation_params("Rabbit"))
-    print "\nStatus: " + robot.show_status(status) + "\n"
 
     if status.isWellSpecifiedRobot:
 
