@@ -50,6 +50,8 @@ class Connect:
     def create_robot(self, creation_params):
         """
         Create immediately a robot, returning its status.
+
+        :param creation_params: CreateRobot
         """
 
         self._name = creation_params.name
@@ -88,6 +90,8 @@ class Connect:
         Send the scheduled robot commands to the server, and wait an answer, returning the new robot status.
         In case of an idle robot, it should call repeatedly this method.
         After the returning of this method, all the robot scheduled commands are reset to Nothing.
+
+        :return: RobotStatus
         """
 
         if self._robot_token is not None:
@@ -110,6 +114,9 @@ class Connect:
         """
         Schedule a change motion of the robot.
         This command is only scheduled, and it must be sent explicitely with "wait" method.
+
+        :param speed: int
+        :param heading: int
         """
 
         v = Drive()
@@ -120,7 +127,10 @@ class Connect:
     def scan(self, direction, semiaperture):
         """
         Schedule a scan.
-        This command is only scheduled, and it must be sent explicitely with "wait" method
+        This command is only scheduled, and it must be sent explicitely with "wait" method.
+
+        :param direction: int an angle
+        :param semiaperture: int an angle
         """
 
         v = Scan()
@@ -132,6 +142,9 @@ class Connect:
         """
         Schedule a missile fire.
         This command is only scheduled, and it must be sent explicitely with "wait" method.
+
+        :param direction: int an angle
+        :param distance: int
         """
 
         v = Cannon()
@@ -142,6 +155,8 @@ class Connect:
     def default_creation_params(self, robot_name):
         """
         To use during Robot creation, for setting params to default settings.
+
+        :param robot_name: string
         """
         
         p = CreateRobot()
@@ -162,6 +177,8 @@ class Connect:
     def show_status(self, s):
         """
         Display the RobotStatus.
+
+        :param s: RobotStatus
         """
 
         return show_status1(s)

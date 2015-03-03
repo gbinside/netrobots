@@ -1,11 +1,12 @@
 package netrobots;
 
-// NOTE: the ""= 1"" part are consecutive TAGS, used only in case of protocol versioning.
-
-// NOTE: for generating Python code:
+// NOTE: for generating Python bindings:
 // protoc -I=client --python_out=client client/netrobots.proto
+// NOTE: for other languages there are other similar commands to execute.
 
-
+/**
+ * Params used for creating a new Robot.
+ */
 message CreateRobot {
 
   /**
