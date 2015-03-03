@@ -30,7 +30,6 @@ def goto(robot, x, y):
     while d1 > 80.0:
         data = robot.wait()
         d1 = distance(data.x, data.y, x, y)
-        print "\nd1 = " + str(d1)
 
     # wait speed down
     robot.drive(0, heading)

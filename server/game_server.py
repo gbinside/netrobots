@@ -5,6 +5,8 @@ import zmq.error
 from game_model import *
 from client.netrobots_pb2 import *
 import json
+import sys
+import datetime
 
 COMMAND_WAKE_UP = b"tick"
 COMMAND_RESET_GAME = b"reset-game"
@@ -81,33 +83,41 @@ class GameThread(threading.Thread):
         while True:
             message = wake_up_socket.recv()
 
-            if message == COMMAND_WAKE_UP:
-                self.process_robots_requests(client_socket)
+            try:
+                if message == COMMAND_WAKE_UP:
+                    self.process_robots_requests(client_socket)
+                    wake_up_socket.send(b"")
+                elif message == COMMAND_RESET_GAME:
+                    self.init_game()
+                    wake_up_socket.send(b"")
+                elif message == COMMAND_GET_BOARD:
+                    wake_up_socket.send(json.dumps(self._board.get_status()))
+                else:
+                    wake_up_socket.send(b"")
+            except :
+                self.debug_message("Unexpected error " + str(sys.exc_info()[0]))
                 wake_up_socket.send(b"")
-            elif message == COMMAND_RESET_GAME:
-                self.init_game()
-                wake_up_socket.send(b"")
-            elif message == COMMAND_GET_BOARD:
-                wake_up_socket.send(json.dumps(self._board.get_status()))
-            else:
-                assert(False)
 
     def process_robots_requests(self, client_socket):
-
         self._board.tick(self._deltatime)
 
-        self.processed_robots = self.queued_robot_messages
-        # for sure a queued robot, can not send process commands in this turn
+        self.processed_robots.clear()
 
         # First process queued robots.
-        for token, v in self.queued_robot_messages.iteritems():
+        queue = self.queued_robot_messages
+        self.queued_robot_messages = {}
+        # DEV-NOTE: these instructions are very important:
+        # * the code must work assuming there are no any more queued robots
+        # * a copy of the reference is maintaned for processing them
+
+        for token, v in queue.iteritems():
             try:
                 self.process_robot_command(v['command'], v['sender_address'], client_socket)
+                self.processed_robots[token] = True
             except:
+                self.debug_message("Unexpected error " + str(sys.exc_info()[0]))
                 client_socket.send_multipart([v['sender_address'], b'', b''])
                 # in ZMQ is mandatory sending an answer
-
-        self.queued_robot_messages = {}
 
         # Update the robots according the new requests from clients.
         again = True
@@ -125,6 +135,7 @@ class GameThread(threading.Thread):
 
             except:
                 # there is an error processing the command for this client.
+                self.debug_message("Unexpected error " + str(sys.exc_info()[0]))
                 if sender_address is not None:
                     client_socket.send_multipart([sender_address, b'', b''])
                     # in ZMQ is mandatory sending an answer
@@ -144,9 +155,12 @@ class GameThread(threading.Thread):
                 pass
             elif token in self.queued_robot_messages:
                     self.banned_robots[token] = True
+                    robot = self._board.get_robot_by_token(token)
+                    self.debug_message("Banned " + token + ". Board time is " + str(self._board.global_time()) + ", robot time is " + str(robot.last_command_executed_at_global_time))
             else:
                 if token in self.processed_robots:
                     self.queued_robot_messages[token] = {'sender_address': sender_address, 'command': command }
+                    robot = self._board.get_robot_by_token(token)
                 else:
                     self.processed_robots[token] = True
                     self.process_robot_request(command.robotCommand, sender_address, client_socket)

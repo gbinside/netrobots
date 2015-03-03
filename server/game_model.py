@@ -412,8 +412,6 @@ class Robot:
         :return: RobotStatus
         """
 
-        self.debug_message("get_exportable_status  START")
-
         r = RobotStatus()
         r.name = self._name
         r.token = self.get_token()
@@ -431,17 +429,12 @@ class Robot:
         r.firedNewMissile = self.fired_new_missile
 
         if self.scan_degree is not None:
-            self.debug_message("get_exportable_status  22")
-
             p = ScanStatus()
             p.direction = int(self.scan_degree)
             p.semiaperture = int(self.scan_resolution)
             p.distance = int(self.scan_distance)
             r.scan.CopyFrom(p)
-            self.debug_message("get_exportable_status  50")
 
-
-        self.debug_message("get_exportable_status  END")
         return r
 
     def drive(self, degree, speed):
