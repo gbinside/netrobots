@@ -36,14 +36,18 @@ var drawRobot = true,
 var robots = [];
 
 var paletteColors = [
-    '#CC00CC', // viola
+    '#CC00CC', // viola chiaro
+    '#740074', // viola scuro
+    '#7600F6', // ?
     '#3333FF', // blu
+    '#0083F6', // azzurro
     '#009999', // verde-acqua
     '#009933', // verde
     '#999966', // verde-grigio
     '#FF9900', // arancione
     '#CC3333', // rosso
-    '#996633'  // marrone
+    '#996633', // marrone
+    '#B0B0B0'  // grigio
 ];
 
 function Robot(name,hp,x,y,dx,dy,speed,kdr) {
@@ -159,6 +163,37 @@ function ReloadingPop(x, y, time) {
 }
 
 
+
+// Console
+var console = {
+    fps: 0,
+    ajaxtime: 0,
+
+    'update': function() {
+        $('#console').html(
+            "<p class='row'>FPS: "+this.fps+"</p>" +
+            "<p class='row'>Process ajax data time: "+this.ajaxtime+" ms</p>"
+        );
+    }
+};
+
+
+// Hotkeys
+
+function commutateHotkeyStatus(keyCode, status) {
+    if (typeof status == "boolean") {
+        status = status ? "On" : "Off";
+    }
+    var sel = '.hotkey-'+keyCode;
+    if ($(sel).length) {
+        if ($(sel+' .status').length) {
+            $(sel+' .status').html(status);
+        } else {
+            $(sel).prepend("<span class='status'>"+status+"</span>");
+        }
+    }
+}
+
 // Canvas
 var c2d = document.getElementById("board"),
     ctx = c2d.getContext("2d");
@@ -174,7 +209,8 @@ var main = function () {
 
     // fps counter
     if (Date.now()-lastTime > 1000) {
-        $('#fps').html(FPScounter);
+        //$('#fps').html(FPScounter);
+        console.fps = FPScounter;
         FPScounter=0;
         lastTime = Date.now();
     }
@@ -404,9 +440,9 @@ var update = function () {
         }
     }
 };
-
 $(document).ready(function(){
     var interval = setInterval(function () {
+        var time_start = Date.now();
         $.get('/v1/board/', function (data) {
             var k;
             $('.robot-list').html('');
@@ -530,8 +566,9 @@ $(document).ready(function(){
                     }
                 }
             }
-
-        })
+        });
+        console.ajaxtime =  Date.now() - time_start;
+        console.update();
     }, TIME_SLOT);
 
     $('.reset-game').click( function(e) {
@@ -548,14 +585,22 @@ $(document).ready(function(){
             if(!alwaysShowStatsTab) {
                 e.preventDefault();
                 showStatsTab=true;
+                commutateHotkeyStatus(keyCode, true);
             }
         }else if (keyCode == 81 || keyCode == 113) {//q OR Q
             alwaysShowStatsTab = !alwaysShowStatsTab;
+            commutateHotkeyStatus(keyCode, alwaysShowStatsTab);
         }else if (keyCode == 87 || keyCode == 119) {//w OR W
             drawReloadingPopup = !drawReloadingPopup;
+            commutateHotkeyStatus(keyCode, drawReloadingPopup);
         }else if (keyCode == 69 || keyCode == 101) {//e OR E
             drawDmgPopup = !drawDmgPopup;
+            commutateHotkeyStatus(keyCode, drawDmgPopup);
+        }else if (keyCode == 90 || keyCode == 122) {//z OR Z
+            $('#console').toggle();
+            commutateHotkeyStatus(keyCode, $('#console').is(':visible'));
         }
+
     });
     $(document).keyup(function(e) {
         var keyCode = e.keyCode || e.which;
@@ -563,9 +608,23 @@ $(document).ready(function(){
             if(!alwaysShowStatsTab) {
                 e.preventDefault();
                 showStatsTab=false;
+                commutateHotkeyStatus(keyCode, false);
             }
         }
     });
+
+    // console
+    $('#console').appendTo('body');
+    $('#console').draggable();
+    $('#console').hide();
+
+
+    // hotkeys
+    commutateHotkeyStatus(9, false);
+    commutateHotkeyStatus(81, alwaysShowStatsTab);
+    commutateHotkeyStatus(87, drawReloadingPopup);
+    commutateHotkeyStatus(69, drawDmgPopup);
+    commutateHotkeyStatus(90, false);
 
     lastTime = Date.now();
     main();

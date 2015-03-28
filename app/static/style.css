@@ -1,29 +1,41 @@
-* {
-
+body {
 }
 
 .debug {
     display: none;
 }
 
+#content {
+    color:#ECECEC;
+
+}
+
 #board, div.board {
     position: relative;
-    border: 1px solid black;
     width: 1000px;
     height: 1000px;
     overflow: hidden;
+    /*border: 1px solid black;
+    background-color: #ECECEC*/;
 }
-#fps {
-    position: absolute;
-    top:0;
-    left:0;
+
+#console {
+    width:400px;
+    height:300px;
+    padding:20px;
+    background-color: #28a4c9;
+    color:#0f0f0f;
+    position:absolute;
+    top:20px;
+    right:20px;
+    -webkit-box-shadow: 0 10px 6px -6px #777;
+    -moz-box-shadow: 0 10px 6px -6px #777;
+    box-shadow: 0 10px 6px -6px #777;
 }
 
 .reset-game {
     margin-left:30px;
 }
-
-
 
 
 /*No Canvas*/

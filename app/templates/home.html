@@ -7,7 +7,6 @@
     <h1 class="entry-title">Netrobots - Boardviewer</h1>
 
     <div class="row">
-        <div id="fps">&nbsp;</div>
         <div class="col-md-10">
             <canvas id="board" width="1000" height="1000">Your browser does not support the HTML5 canvas tag.</canvas>
         </div>
@@ -20,10 +19,11 @@
     <div class="row">
         <div class="col-md-6 info">
             <h4>Hotkeys</h4>
-            <p> Q - press to enable or disable fixed stats.</p>
-            <p> TAB - press and hold for showing stats and release for hiding.</p>
-            <p> W - press to enable or disable reloading popups.</p>
-            <p> E - press to enable or disable damage popups.</p>
+            <p class="hotkey-81"> - Q, press to enable or disable fixed stats.</p>
+            <p class="hotkey-9"> - TAB, press and hold for showing stats and release for hiding. (Q must be Off)</p>
+            <p class="hotkey-87"> - W, press to enable or disable reloading popups.</p>
+            <p class="hotkey-69"> - E, press to enable or disable damage popups.</p>
+            <p class="hotkey-90"> - Z, press to enable or disable the console.</p>
         </div>
     </div>
 </section>
@@ -31,5 +31,6 @@
 
 {% block aftercontent %}
 <a href="/nocanvas">nocanvas version</a>
+<div id="console" class="console"></div>
 <script src="{{ url_for('static', filename='main.js') }}"></script>
 {% endblock %}
