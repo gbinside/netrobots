@@ -1,4 +1,5 @@
 body {
+    color:#000;
 }
 
 .debug {
@@ -6,7 +7,7 @@ body {
 }
 
 #content {
-    color:#ECECEC;
+    color:#000;
 
 }
 
@@ -15,8 +16,8 @@ body {
     width: 1000px;
     height: 1000px;
     overflow: hidden;
-    /*border: 1px solid black;
-    background-color: #ECECEC*/;
+    border: 1px solid black;
+    background-color: #EEE;
 }
 
 #console {
