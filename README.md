@@ -49,3 +49,4 @@ TODO
 * Raffinare la logica di sterzo sopra la velocità massima di sterzo (`_max_sterling_speed`), magari con aggiunta di danno autoinflitto
 * L'urto con qualcosa infligge 2 punti di danno a prescindere dalla velocità al momento dell'impatto. Farlo dipendere dalla velocità?
 * Muri; ora l'arena è vuota, si potrebbere prevedere muri casuali, ma questo imporrebbe modifiche anche allo scanner.
+* Mine; aggiungere mine casuali all'inizio del gioco e ogni TOT. aggiornare il radar per rilevarle.
