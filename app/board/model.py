@@ -71,6 +71,8 @@ class Explosion:
         if 1 == self._step:
             # do damage
             for robot in self._board.robots.values():
+                if robot.is_dead():
+                    continue
                 d, a = robot.distance((self._x, self._y))
                 total_damage = 0
                 for distance, hp_damage in self._damage:
