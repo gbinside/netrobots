@@ -37,6 +37,8 @@ class Robot:
         self._reloading_time = 2  # s
         self._reloading_counter = 0.0
 
+        if configuration is None:
+            configuration = {}
         for k, v in configuration.items():
             if v is not None:
                 if hasattr(self, '_' + k):
