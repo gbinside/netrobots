@@ -40,7 +40,8 @@ I proiettili sparati fuori dall'arena esplodono fuori, non collidono coi bordi p
 NOTE TECNICHE
 =============
 
-la versione committata gira con un rapporto temporale di x2
+* la versione committata gira con un rapporto temporale di x2
+* in caso di chiamate troppo frequenti da parte di un token (throttling) si riceve una risposta di errore HTTP 509
 
 TODO
 =====
