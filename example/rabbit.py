@@ -1,9 +1,11 @@
-from math import atan2, degrees
-from random import randint
-import urllib2
-import urllib
 import json
 import sys
+import threading
+import time
+import urllib
+import urllib2
+from math import atan2, degrees
+from random import randint
 
 __author__ = 'roberto'
 
@@ -22,8 +24,19 @@ def urlopen(url, data=None, method='GET'):
         request = urllib2.Request(url=BASE + url, headers=content_header)
     request.get_method = lambda: method
 
-    response = urllib2.urlopen(request)
-
+    retry = 5
+    wait_time = 0.1
+    while retry:
+        try:
+            response = urllib2.urlopen(request)
+            break
+        except Exception as e:
+            retry -= 1
+            if not retry:
+                exc_info = sys.exc_info()
+                raise exc_info[1], None, exc_info[2]
+            time.sleep(wait_time)
+            wait_time *= 2.0
     return response
 
 
@@ -39,7 +52,8 @@ def goto(token, x, y):
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=100), 'PUT').read())
     data = json.loads(urlopen('robot/' + token).read())
     # 80 break distance
-    while distance(data['robot']['x'], data['robot']['y'], x, y) > 72.1 and data['robot']['speed'] > 0:  # breaking distance = approx 72.1 m
+    while distance(data['robot']['x'], data['robot']['y'], x, y) > 72.1 and data['robot'][
+        'speed'] > 0:  # breaking distance = approx 72.1 m
         data = json.loads(urlopen('robot/' + token).read())
     data = json.loads(urlopen('robot/' + token + '/drive', dict(degree=heading, speed=0), 'PUT').read())
     while data['robot']['speed'] > 0:
@@ -48,9 +62,19 @@ def goto(token, x, y):
     return not data['robot']['dead']
 
 
+def delete(token):
+    urlopen('robot/' + token, method='DELETE')
+
+
 def main(argv):
     # create robot
-    data = json.loads(urlopen('robot/', {'name': (argv[1] if len(argv) > 1 else 'RABBIT')}, 'POST').read())
+    data = json.loads(urlopen('robot/',
+                              {
+                                  'name': argv[1] if len(argv) > 1 else 'RABBIT',
+                                  'max_speed': 34,
+                                  'max_fire_distance': 0,
+                                  'max_scan_distance': 0
+                              }, 'POST').read())
     # token is the signature to be used to send commands
     token = data['token']
     # main loop - goto random position
@@ -59,7 +83,23 @@ def main(argv):
             pass
     except:
         pass
-    urlopen('robot/'+token, method='DELETE')
+    delete(token)
+
 
 if __name__ == '__main__':
-    main(sys.argv)
+    try:
+        n = int(sys.argv[1])
+    except:
+        main(sys.argv)
+        sys.exit(0)
+    pool = []
+    for i in xrange(n):
+        t = threading.Thread(target=main, args=([sys.argv[0], 'RABBIT{}'.format(i)],))
+        t.start()
+        pool.append(t)
+    while 1:
+        if False in [x.isAlive() for x in pool]:
+            for i in xrange(len(pool)):
+                pool[i] = threading.Thread(target=main, args=([sys.argv[0], 'RABBIT{}'.format(i)],))
+                pool[i].start()
+        time.sleep(1)

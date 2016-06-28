@@ -1,23 +1,57 @@
-# Import flask dependencies
+import json
 import time
 from functools import wraps
-from flask import Blueprint, Response, request, g, session
-from app.robot.model import Robot
 from hashlib import md5
-import json
+
+from flask import Blueprint, Response, request, g, session
+
 import app
+from app.robot.model import Robot
 
 # Define the blueprint: 'robot', set its url prefix: app.url/v1/robot
 mod_robot = Blueprint('robot', __name__, url_prefix='/v1/robot')
 
 
+class TokenTable(object):
+    def __init__(self, ttl):
+        self._ttl = ttl
+        self._last = {}
+
+    def __call__(self, token):
+        if token in self._last:
+            wait_time = self._ttl - (time.time() - self._last[token])
+            if wait_time > 0:
+                return True
+                # time.sleep(wait_time)
+        self._last[token] = time.time()
+        return False
+
+
+# throttle decorator, number of call per second per token
+def throttle(times_per_second_per_token):
+    lock = TokenTable(ttl=1.0 / float(times_per_second_per_token))
+
+    def decofunction(original_function):
+        @wraps(original_function)
+        def new_function(token):
+            if lock(token):
+                return Response(response=json.dumps({'status': 'KO'}),
+                                status=509,
+                                mimetype="application/json")
+            return original_function(token)
+
+        return new_function
+
+    return decofunction
+
+
+# login decorator
 def check_token(original_function):
     @wraps(original_function)
     def new_function(token):
         if token in app.robot.hash_table:
             robot = app.robot.hash_table[token]
             assert isinstance(robot, Robot)
-            time.sleep(app.app.game_board_th.get_sleep_time() / float(len(app.robot.hash_table)))
             return original_function(robot)
 
         resp = Response(response=json.dumps({'status': 'KO'}),
@@ -113,6 +147,7 @@ def new_robot():
 
 
 @mod_robot.route('/<token>', methods=['GET'])
+@throttle(5)
 @check_token
 def status(robot):
     resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_status()}),
@@ -122,6 +157,7 @@ def status(robot):
 
 
 @mod_robot.route('/<token>/data', methods=['GET'])
+@throttle(5)
 @check_token
 def status_data(robot):
     resp = Response(response=json.dumps({'status': 'OK', 'robot': robot.get_data()}),
@@ -131,6 +167,7 @@ def status_data(robot):
 
 
 @mod_robot.route('/<token>/drive', methods=['PUT'])
+@throttle(2)
 @check_token
 def drive(robot):
     speed = request.form['speed']
@@ -149,12 +186,12 @@ def drive(robot):
 
 
 @mod_robot.route('/<token>/scan', methods=['PUT'])
+@throttle(2)
 @check_token
 def scan(robot):
     degree = int(float(request.form['degree']))
     resolution = int(float(request.form['resolution']))
     assert isinstance(robot, Robot)
-    time.sleep(app.app.game_board_th.get_sleep_time())
     ret = robot.scan(degree, resolution)
 
     if ret is not None:
@@ -170,6 +207,7 @@ def scan(robot):
 
 
 @mod_robot.route('/<token>/cannon', methods=['PUT'])
+@throttle(2)
 @check_token
 def cannon(robot):
     degree = request.form['degree']

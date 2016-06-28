@@ -4,7 +4,6 @@ from rabbit import distance, urlopen
 from urllib2 import HTTPError
 from random import randint
 import threading
-import msvcrt
 import json
 
 __author__ = 'roberto'
@@ -46,8 +45,6 @@ def main():
     teta = 0
     resolution = 10
     while not data['robot']['dead']:
-        if msvcrt.kbhit():
-            break
         data = json.loads(urlopen('robot/' + token + '/scan', {'degree': teta, 'resolution': resolution}, 'PUT').read())
         dist = data['distance']
         if dist > 0.1:  # maximum damage radius

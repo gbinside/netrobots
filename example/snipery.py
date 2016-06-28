@@ -4,8 +4,8 @@ from urllib2 import HTTPError
 from random import randint
 from time import sleep
 import threading
-import msvcrt
 import json
+import sys
 
 __author__ = 'roberto'
 
@@ -108,7 +108,7 @@ def delete(token):
 
 
 def main():
-    data = json.loads(urlopen('robot/', {'name': 'SNIPERY', 'bullet_damage': json.dumps(((23, 10),))}, 'POST').read())
+    data = json.loads(urlopen('robot/', {'name': 'SNIPERY' if len(sys.argv)<2 else sys.argv[1], 'bullet_damage': json.dumps(((23, 10),))}, 'POST').read())
     token = data['token']
     print token
 
@@ -124,8 +124,6 @@ def main():
     teta = 0
     resolution = 10
     while not robot['dead']:
-        if msvcrt.kbhit():
-            break
         scan_xy = scan(teta, resolution, token)
         if scan_xy is not None:
             cannon(scan_xy, token)
@@ -138,5 +136,3 @@ def main():
 if __name__ == '__main__':
     while 1:
         main()
-        if msvcrt.kbhit():
-            break
