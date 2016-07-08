@@ -35,8 +35,8 @@ def throttle(times_per_second_per_token):
         @wraps(original_function)
         def new_function(token):
             if lock(token):
-                return Response(response=json.dumps({'status': 'KO'}),
-                                status=509,
+                return Response(response=json.dumps({'status': 'You hit the rate limit'}),
+                                status=400,
                                 mimetype="application/json")
             return original_function(token)
 

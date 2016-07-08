@@ -42,6 +42,9 @@ NOTE TECNICHE
 
 * la versione committata gira con un rapporto temporale di x2
 * in caso di chiamate troppo frequenti da parte di un token (throttling) si riceve una risposta di errore HTTP 509
+* Il robot controller ha un 'rete limit', un limite di richieste, possibili al secondo (reale) per ogni token.   
+** `status` e `status_data` sono limitati a 5 richieste per secondo (ognuno)
+** `drive`, `scan` e `cannon` sono limitati a 2 richieste per secondo (ognuno)
 
 TODO
 =====
