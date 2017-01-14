@@ -107,7 +107,8 @@ class RobotAlreadyExistsException(Exception):
 
 
 class Board:
-    def __init__(self, size=(1000, 1000)):
+    def __init__(self, delayfactor, size=(1000, 1000)):
+        self._delayfactor = delayfactor
         self._size = size
         self.robots = {}
         self._missiles = {}
@@ -134,6 +135,7 @@ class Board:
 
     def get_status(self):
         ret = dict(
+            delayfactor=self._delayfactor,
             size=self._size,
             robots=[v.get_status() for v in self.robots.values()],
             missiles=dict([(k, v.get_status()) for k, v in self._missiles.items()]),

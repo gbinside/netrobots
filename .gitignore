@@ -1,3 +1,5 @@
 /.idea
 *.pyc
 /env/
+/.project
+/.pydevproject

@@ -1,16 +1,24 @@
 
-// TOSET
-var TIME_SLOT       = 500; // time interval between ajax data request
-var REFRESH_RATE    = 30; // how many times boards must be refreshed in a second
-var REFRESH_TIME    = 1000/REFRESH_RATE; // time interval between updates
-var TIME_SLOT_RATE  = 1000/TIME_SLOT; // how many data request in a second
-var delay_factor    = 1.0;
-var delta_time      = 0.50;
+// -TO SET-
+var TIME_SLOT           = 450; // time interval between ajax data request
+var REFRESH_RATE        = 30; // how many times boards must be refreshed in a second
+var statsTab            = true; // use TAB STATS or DIV STATS
+// ROBOT GARBAGE
+// max time for a robot to do something otherwise it'll considered dead
+// simply will be reloaded if it appears again in the data from the ajax request
+var MAX_TIME_ROBOT_DEAD = Math.ceil(2*REFRESH_RATE);
 
+
+// -TO NOT SET-
+var REFRESH_TIME        = 1000/REFRESH_RATE; // time interval between updates
+var TIME_SLOT_RATE      = 1000/TIME_SLOT; // how many data request in a second
+var DELAY_FACTOR        = 1.0;  // delay based on server's times intervals
+// KEYBOARD variable
+var showStatsTab = false;
+var alwaysShowStatsTab  = true; // always show STATS
 // FPS variable
 var FPScounter = 0;
 var lastTime;
-
 
 // DEBUG
 var getDataRobot = true,
@@ -21,12 +29,28 @@ var drawRobot = true,
     drawRadar = true,
     drawMissiles = true,
     drawExplosions = true,
-    drawDmgPopup = true;
+    drawDmgPopup = true,
+    drawReloadingPopup = true;
 
 // Robots
 var robots = [];
 
-function Robot(name,hp,x,y,dx,dy) {
+var paletteColors = [
+    '#CC00CC', // viola chiaro
+    '#740074', // viola scuro
+    '#7600F6', // ?
+    '#3333FF', // blu
+    '#0083F6', // azzurro
+    '#009999', // verde-acqua
+    '#009933', // verde
+    '#999966', // verde-grigio
+    '#FF9900', // arancione
+    '#CC3333', // rosso
+    '#996633', // marrone
+    '#B0B0B0'  // grigio
+];
+
+function Robot(name,hp,x,y,dx,dy,speed,kdr) {
     this.name=name;
     this.hp=hp;
     this.x=x;
@@ -35,24 +59,43 @@ function Robot(name,hp,x,y,dx,dy) {
     this.dy=dy;
     this.destx=x;
     this.desty=y;
+    this.speed=speed;
+    this.kdr=kdr;
     this.interval=null;
+    this.reloading_timer=0;
+    this.step = MAX_TIME_ROBOT_DEAD;
+    this.color = GetColor();
+}
+/**
+ * @return {string}
+*/
+function GetColor () {
+    var colors = paletteColors;
+    for(var k in robots) {
+        for(var i=0; i<colors.length; ++i) {
+            if (robots.hasOwnProperty(k)) {
+                if (robots[k].color==colors[i]) {
+                    colors.splice(i, 1);
+                }
+            }
+        }
+    }
+    if (colors.length>0) {
+        return colors[Math.floor(Math.random()*colors.length)];
+    } else {
+        return paletteColors[Math.floor(Math.random()*paletteColors.length)];
+    }
 }
 
 function RobotMove (i) {
     robots[i].x += robots[i].dx;
     robots[i].y += robots[i].dy;
 }
-/**
- * @param i unique name
- * This function avoid the accumulation of errors in the robots' positions
- * caused by adding dx and dy values, so i force destination x and y
- * to be the actual coordinates for the robot.
- */
-function ResetRobotPosition (i) {
-    robots[i].x = robots[i].destx;
-    robots[i].y = robots[i].desty;
-}
 
+function KDR(kill,death) {
+    this.kill=kill;
+    this.death=death;
+}
 
 // Radars
 var radars = [];
@@ -64,6 +107,7 @@ function Radar(x, y, dist, degree, res) {
     this.degree=degree;
     this.resolution=res;
     this.opacity=1.0;
+    this.active=true;
 }
 
 // Missiles
@@ -72,7 +116,7 @@ var missiles = [];
 function Missile(x, y, degree, distance, speed) {
     this.x = x;
     this.y = y;
-    this.step = Math.ceil((distance/(speed*delta_time))*REFRESH_RATE);
+    this.step = Math.ceil((distance/(speed*DELAY_FACTOR))*REFRESH_RATE);
     this.dx = (distance*Math.cos(degree))/this.step;
     this.dy = -(distance*Math.sin(degree))/this.step; // - because 0,0 is top left
     this.active=true;
@@ -107,6 +151,48 @@ function DamagePop(x, y, dmg) {
 }
 
 
+// Reloading Popup
+var reloadingpop = [];
+
+function ReloadingPop(x, y, time) {
+    this.x=x;
+    this.y=y;
+    this.time=time;
+    this.opacity=1.0;
+    this.step = Math.ceil(REFRESH_RATE); // 1s for the popup to disappear
+}
+
+
+
+// Console
+var console = {
+    fps: 0,
+    ajaxtime: 0,
+
+    'update': function() {
+        $('#console').html(
+            "<p class='row'>FPS: "+this.fps+"</p>" +
+            "<p class='row'>Process ajax data time: "+this.ajaxtime+" ms</p>"
+        );
+    }
+};
+
+
+// Hotkeys
+
+function commutateHotkeyStatus(keyCode, status) {
+    if (typeof status == "boolean") {
+        status = status ? "On" : "Off";
+    }
+    var sel = '.hotkey-'+keyCode;
+    if ($(sel).length) {
+        if ($(sel+' .status').length) {
+            $(sel+' .status').html(status);
+        } else {
+            $(sel).prepend("<span class='status'>"+status+"</span>");
+        }
+    }
+}
 
 // Canvas
 var c2d = document.getElementById("board"),
@@ -123,7 +209,8 @@ var main = function () {
 
     // fps counter
     if (Date.now()-lastTime > 1000) {
-        $('#fps').html(FPScounter);
+        //$('#fps').html(FPScounter);
+        console.fps = FPScounter;
         FPScounter=0;
         lastTime = Date.now();
     }
@@ -141,14 +228,21 @@ var render = function () {
     if (drawRobot) {
         for (k in robots) {
             if (robots.hasOwnProperty(k)) {
-                ctx.fillStyle = "#008800";
-                ctx.strokeStyle = "#008800";
+                ctx.fillStyle = ctx.strokeStyle = robots[k].color;
 
                 // draw robot's NAME + HP
                 tempfont = ctx.font;
                 ctx.font="16px Verdana";
                 ctx.fillText(k+" "+robots[k].hp+"hp", robots[k].x+10, robots[k].y-10);
                 ctx.font = tempfont;
+
+                if (showStatsTab || alwaysShowStatsTab) {
+                    // draw robot's SP, KDA
+                    tempfont = ctx.font;
+                    ctx.font="14px Verdana";
+                    ctx.fillText("KDA: "+robots[k].kdr.kill+'/'+robots[k].kdr.death+", SP:"+robots[k].speed, robots[k].x+10, robots[k].y+10);
+                    ctx.font = tempfont;
+                }
 
                 // draw robot's shape
                 ctx.beginPath();
@@ -167,41 +261,43 @@ var render = function () {
     if (drawRadar) {
         for (k in radars) {
             if (radars.hasOwnProperty(k)) {
-                var radius      = radars[k].distance;
-                var xRobot      = parseInt(radars[k].x);
-                var yRobot      = parseInt(radars[k].y);
-                var degreeRad   = Math.PI*radars[k].degree/180.0;
-                var resRad      = Math.PI*radars[k].resolution/180.0;
-                var degreeStart = 2*Math.PI-degreeRad-resRad;
-                var degreeEnd   = 2*Math.PI-degreeRad+resRad;
-                var xStartScan  = xRobot+radius*Math.cos(degreeStart);
-                var yStartScan  = yRobot+radius*Math.sin(degreeStart);
-                var xEndScan    = xRobot+radius*Math.cos(degreeEnd);
-                var yEndScan    = yRobot+radius*Math.sin(degreeEnd);
+                if(radars[k].active) {
+                    var radius      = radars[k].distance;
+                    var xRobot      = parseInt(radars[k].x);
+                    var yRobot      = parseInt(radars[k].y);
+                    var degreeRad   = Math.PI*radars[k].degree/180.0;
+                    var resRad      = Math.PI*radars[k].resolution/180.0;
+                    var degreeStart = 2*Math.PI-degreeRad-resRad;
+                    var degreeEnd   = 2*Math.PI-degreeRad+resRad;
+                    var xStartScan  = xRobot+radius*Math.cos(degreeStart);
+                    var yStartScan  = yRobot+radius*Math.sin(degreeStart);
+                    var xEndScan    = xRobot+radius*Math.cos(degreeEnd);
+                    var yEndScan    = yRobot+radius*Math.sin(degreeEnd);
 
-                ctx.fillStyle = "#6464FF";
-                ctx.strokeStyle = "#6464FF";
-                ctx.lineWidth = 1;
-                ctx.globalAlpha = radars[k].opacity;
+                    ctx.fillStyle = "#6464FF";
+                    ctx.strokeStyle = "#6464FF";
+                    ctx.lineWidth = 1;
+                    ctx.globalAlpha = radars[k].opacity;
 
-                // Create the shape of the scan by adding a triangle and an arc
-                // create a triangle of the scan
-                ctx.beginPath();
-                ctx.moveTo(xRobot, yRobot);
-                ctx.lineTo(xStartScan, yStartScan);
-                ctx.lineTo(xEndScan, yEndScan);
-                ctx.lineTo(xRobot, yRobot);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                // add a filled arc to the triangle
-                ctx.beginPath();
-                ctx.arc(xRobot, yRobot, radius, degreeStart, degreeEnd, false);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+                    // Create the shape of the scan by adding a triangle and an arc
+                    // create a triangle of the scan
+                    ctx.beginPath();
+                    ctx.moveTo(xRobot, yRobot);
+                    ctx.lineTo(xStartScan, yStartScan);
+                    ctx.lineTo(xEndScan, yEndScan);
+                    ctx.lineTo(xRobot, yRobot);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    // add a filled arc to the triangle
+                    ctx.beginPath();
+                    ctx.arc(xRobot, yRobot, radius, degreeStart, degreeEnd, false);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
 
-                ctx.globalAlpha = 1.0;
+                    ctx.globalAlpha = 1.0;
+                }
             }
         }
     }
@@ -258,8 +354,23 @@ var render = function () {
                 //ctx.globalAlpha = explosions[k].opacity;
 
                 tempfont = ctx.font;
-                ctx.font=16+(damagepop[k].dmg/5)+"px Verdana";
+                ctx.font=16+(damagepop[k].dmg/2)+"px Verdana";
                 ctx.fillText("-"+damagepop[k].dmg, damagepop[k].x-10, damagepop[k].y-10);
+                ctx.font = tempfont;
+                //ctx.globalAlpha = 1.0;
+            }
+        }
+    }
+    if (drawReloadingPopup) {
+        for (k in reloadingpop) {
+            if (reloadingpop.hasOwnProperty(k)) {
+                ctx.fillStyle = "#0066CC";
+                ctx.strokeStyle = "#0066CC";
+                //ctx.globalAlpha = explosions[k].opacity;
+
+                tempfont = ctx.font;
+                ctx.font="16px Verdana";
+                ctx.fillText(reloadingpop[k].time, reloadingpop[k].x-10, reloadingpop[k].y+20);
                 ctx.font = tempfont;
                 //ctx.globalAlpha = 1.0;
             }
@@ -272,13 +383,21 @@ var update = function () {
     for (k in robots) {
         if (robots.hasOwnProperty(k)) {
             RobotMove(k);
+            // consider robot dead if not found in data.robots for a
+            // MAX_TIME_ROBOT_DEAD steps
+            --robots[k].step;
+            if (robots[k].step <= 0) {
+                delete robots[k];
+            }
         }
     }
     for (k in radars) {
         if (radars.hasOwnProperty(k)) {
-            radars[k].opacity-=0.1;
-            if (radars[k].opacity <= 0) {
-                delete radars[k];
+            if(radars[k].active) {
+                radars[k].opacity-=0.1;
+                if (radars[k].opacity <= 0) {
+                    radars[k].active = false;
+                }
             }
         }
     }
@@ -311,29 +430,40 @@ var update = function () {
             }
         }
     }
+    for (k in reloadingpop) {
+        if (reloadingpop.hasOwnProperty(k)) {
+            reloadingpop[k].y+=1;
+            --reloadingpop[k].step;
+            if (reloadingpop[k].step <= 0) {
+                delete reloadingpop[k];
+            }
+        }
+    }
 };
-
 $(document).ready(function(){
     var interval = setInterval(function () {
+        var time_start = Date.now();
         $.get('/v1/board/', function (data) {
+            var k;
             $('.robot-list').html('');
-            data['delay_factor'] = delay_factor;
+            DELAY_FACTOR = data['delayfactor'];
             if (getDataRobot) {
                 for (k in data.robots) {
                     if (data.robots.hasOwnProperty(k)) {
 
                         var name = data.robots[k].name;
-                        var destinationX = parseInt(data.robots[k].x);
-                        var destinationY = 1000 - parseInt(data.robots[k].y); // canvas 0,0 is top left
+                        var destinationX = data.robots[k].x;
+                        var destinationY = 1000 - data.robots[k].y; // canvas 0,0 is top left
                         var hp = parseInt(data.robots[k].hp);
                         var speed = parseInt(data.robots[k].speed);
+                        var kdr = (name in data.kdr) ? new KDR(data.kdr[name].kill, data.kdr[name].death) : new KDR(0,0);
+                        var reloadTime = Math.floor(data.robots[k].reloading_timer);
 
                         // robot not already added, add and create new robot
                         if (!(name in robots)) {
-                            robots[name] = new Robot(name, hp, destinationX, destinationY, 0, 0);
+                            robots[name] = new Robot(name, hp, destinationX, destinationY, 0, 0, speed, kdr);
                         } else {
                             // update robot's positions
-                            ResetRobotPosition(name);   // see notes above this function implementation
                             var currentX = robots[name].x;
                             var currentY = robots[name].y;
                             var dx = (destinationX-currentX)/(REFRESH_RATE/TIME_SLOT_RATE);
@@ -347,15 +477,23 @@ $(document).ready(function(){
                                 damagepop[k] = new DamagePop(currentX, currentY, robots[name].hp - hp);
                                 robots[name].hp = hp;
                             }
+                            // reloading time
+                            if (reloadTime != parseInt(robots[name].reloading_timer)) {
+                                reloadingpop[k] = new ReloadingPop(currentX, currentY, reloadTime);
+                                robots[name].reloading_timer = reloadTime;
+                            }
+                            // kdr
+                            robots[name].kdr = kdr;
+                            robots[name].speed = speed;
+                            // reset
+                            robots[name].step = MAX_TIME_ROBOT_DEAD;
                         }
 
                         // stats
-                        $('.robot-list').append('<li id="'+name+'"></li>');
-                        var extra = '';
-                        if (name in data.kdr) {
-                            extra = ' - KDR: ' + data.kdr[name].kill + '/' + data.kdr[name].death;
+                        if (!statsTab) {
+                            $('.robot-list').append('<li id="'+name+'"></li>');
+                            $('.robot-list li#'+name).html(name+' - HP: '+hp+' - SP: '+ speed + ' - KDR: ' + kdr.kill + '/' + kdr.death);
                         }
-                        $('.robot-list li#'+name).html(name+' - HP: '+hp+' - SP: '+ speed + extra);
                     }
                 }
             }
@@ -363,7 +501,23 @@ $(document).ready(function(){
                 for (k in data.radar) {
                     if (data.radar.hasOwnProperty(k)) {
                         var radar = data.radar[k];
-                        radars[k] = new Radar(radar.xy[0], 1000-radar.xy[1], radar.distance, radar.degree, radar.resolution);
+                        if (!(k in radars)) {
+                            radars[k] =
+                                new Radar(
+                                    radar.xy[0],
+                                    1000-radar.xy[1],
+                                    radar.distance,
+                                    radar.degree,
+                                    radar.resolution
+                                );
+                        }
+                    }
+                }
+                for (k in radars) {
+                    if (!(k in data.radar)) {
+                        if (radars.hasOwnProperty(k)) {
+                            delete radars[k];
+                        }
                     }
                 }
             }
@@ -412,8 +566,9 @@ $(document).ready(function(){
                     }
                 }
             }
-
-        })
+        });
+        console.ajaxtime =  Date.now() - time_start;
+        console.update();
     }, TIME_SLOT);
 
     $('.reset-game').click( function(e) {
@@ -423,6 +578,53 @@ $(document).ready(function(){
         $('.robot-list').html('');
         return false;
     });
+
+    $(document).keydown(function(e) {
+        var keyCode = e.keyCode || e.which;
+        if (keyCode == 9) {// TAB
+            if(!alwaysShowStatsTab) {
+                e.preventDefault();
+                showStatsTab=true;
+                commutateHotkeyStatus(keyCode, true);
+            }
+        }else if (keyCode == 81 || keyCode == 113) {//q OR Q
+            alwaysShowStatsTab = !alwaysShowStatsTab;
+            commutateHotkeyStatus(keyCode, alwaysShowStatsTab);
+        }else if (keyCode == 87 || keyCode == 119) {//w OR W
+            drawReloadingPopup = !drawReloadingPopup;
+            commutateHotkeyStatus(keyCode, drawReloadingPopup);
+        }else if (keyCode == 69 || keyCode == 101) {//e OR E
+            drawDmgPopup = !drawDmgPopup;
+            commutateHotkeyStatus(keyCode, drawDmgPopup);
+        }else if (keyCode == 90 || keyCode == 122) {//z OR Z
+            $('#console').toggle();
+            commutateHotkeyStatus(keyCode, $('#console').is(':visible'));
+        }
+
+    });
+    $(document).keyup(function(e) {
+        var keyCode = e.keyCode || e.which;
+        if (keyCode == 9) {// TAB
+            if(!alwaysShowStatsTab) {
+                e.preventDefault();
+                showStatsTab=false;
+                commutateHotkeyStatus(keyCode, false);
+            }
+        }
+    });
+
+    // console
+    $('#console').appendTo('body');
+    $('#console').draggable();
+    $('#console').hide();
+
+
+    // hotkeys
+    commutateHotkeyStatus(9, false);
+    commutateHotkeyStatus(81, alwaysShowStatsTab);
+    commutateHotkeyStatus(87, drawReloadingPopup);
+    commutateHotkeyStatus(69, drawDmgPopup);
+    commutateHotkeyStatus(90, false);
 
     lastTime = Date.now();
     main();
